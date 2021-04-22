@@ -26,7 +26,7 @@ set(SOURCE_FILES
     src/poly_example.c)
 
 # Wskazujemy plik wykonywalny.
-add_executable(poly ${SOURCE_FILES})
+add_executable(poly ${SOURCE_FILES} src/poly.c)
 
 # Dodajemy obsługę Doxygena: sprawdzamy, czy jest zainstalowany i jeśli tak to:
 find_package(Doxygen)
