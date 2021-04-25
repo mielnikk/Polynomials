@@ -4,19 +4,22 @@
 size_t max(size_t a, size_t b) {
     return a > b ? a : b;
 }
+/**
+ * Przepisuje jednomiany pierwszego wielomianu do nowej tablicy.
+ * Dodaje kolejne jednomiany drugiego wielomianu do jednomianów w nowej tablicy,
+ * przy odpowiednich wykładnikach potęg.
+ */
+Mono *AddMonoArrays(Mono *p, Mono *q, size_t p_size, size_t q_size, size_t *new_array_size) {
+    Mono *new_mono_array = calloc(p_size + q_size, sizeof(Mono));
+    size_t last_index = p_size;
 
-Mono *AddMonoArrays(const Poly *p1, const Poly *p2, size_t *new_array_size) {
-    Mono *m1 = p1->arr, *m2 = p2->arr;
-    size_t size1 = p1->size, size2 = p2->size;
-    Mono *new_mono_array = calloc(size1 + size2, sizeof(Mono));
-    size_t last_index = size1;
-    for (size_t i = 0; i < size1; i++) {
-        new_mono_array[i] = m1[i];
+    for (size_t i = 0; i < p_size; i++) {
+        new_mono_array[i] = p[i];
     }
-    for (size_t i = 0; i < size2; i++) {
+    for (size_t i = 0; i < q_size; i++) {
         bool is_added = false;
-        Mono curr_mono = m2[i];
-        for (size_t j = 0; j < size1; j++) {
+        Mono curr_mono = q[i];
+        for (size_t j = 0; j < p_size; j++) {
             if (curr_mono.exp == new_mono_array[j].exp) {
                 new_mono_array[j].p = PolyAdd(&new_mono_array[i].p, &curr_mono.p);
                 is_added = true;
@@ -24,7 +27,7 @@ Mono *AddMonoArrays(const Poly *p1, const Poly *p2, size_t *new_array_size) {
             }
         }
         if (!is_added) {
-            new_mono_array[last_index] = m2[i];
+            new_mono_array[last_index] = q[i];
             last_index++;
         }
     }
@@ -57,7 +60,7 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
 
     if (p->arr != NULL && q->arr != NULL) {
         size_t new_monos_size;
-        Mono *new_array = AddMonoArrays(p, q, &new_monos_size);
+        Mono *new_array = AddMonoArrays(p->arr, q->arr, p->size, q->size, &new_monos_size);
         return (Poly) {.arr = new_array, .size = new_monos_size};
     }
 
