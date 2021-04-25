@@ -4,12 +4,13 @@
 size_t max(size_t a, size_t b) {
     return a > b ? a : b;
 }
+
 /**
  * Przepisuje jednomiany pierwszego wielomianu do nowej tablicy.
  * Dodaje kolejne jednomiany drugiego wielomianu do jednomianów w nowej tablicy,
  * przy odpowiednich wykładnikach potęg.
  */
-Mono *AddMonoArrays(Mono *p, Mono *q, size_t p_size, size_t q_size, size_t *new_array_size) {
+Mono *AddMonoArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_size, size_t *new_array_size) {
     Mono *new_mono_array = calloc(p_size + q_size, sizeof(Mono));
     size_t last_index = p_size;
 
@@ -44,8 +45,7 @@ Poly PolyAddCoeff(const Poly *p, const Poly *c) {
     }
     if (exp_zero_index == p->size) {
         new_mono_array[exp_zero_index] = MonoFromPoly(c, 0);
-    }
-    else {
+    } else {
         Poly newPoly = PolyAdd(&new_mono_array[exp_zero_index].p, c);
         new_mono_array[exp_zero_index].p = newPoly;
     }
@@ -67,4 +67,38 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
     if (p->arr == NULL && q->arr != NULL) {
         return PolyAddCoeff(q, p);
     } else return PolyAddCoeff(p, q);
+}
+
+/**
+ * Usuwa z pamięci listę jednomianów wielomianu
+ * @param[in] p : wielomian z niepustą tablicą @f$arr@f$
+ */
+void DestroyPolyContents(Poly *p) {
+    for (size_t i = 0; i < (*p).size; i++) {
+        Mono curr_mono = (*p).arr[i];
+        if (curr_mono.p.arr != NULL) {
+            DestroyPolyContents(&curr_mono.p);
+        }
+    }
+    free((*p).arr);
+}
+
+/**
+ * Tworzy wielomian z listy jednomianów za pomocą dodawania
+ * tablicy jednomianów @f$monos@f$ do pustej tablicy.
+ * Usuwa zawartość tablicy @f$monos@f$ poprzez usuwanie zawartości
+ * współczynninka każdego jednomianu (jeśli współczynnik zawiera listę
+ * jednomianów).
+ */
+Poly PolyAddMonos(size_t count, const Mono monos[]) {
+    if (count == 0) return (Poly) {.arr = NULL, .coeff = 0};
+    size_t new_array_size;
+    Mono *poly_monos = AddMonoArrays(NULL, &monos[0], 0, count, &new_array_size);
+    for (size_t i = 0; i < count; i++) {
+        Poly p = monos[i].p;
+        if (p.arr != NULL) {
+            DestroyPolyContents(&p);
+        }
+    }
+    return (Poly) {.arr = poly_monos, .size = new_array_size};
 }
