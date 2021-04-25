@@ -71,16 +71,18 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
 
 /**
  * Usuwa z pamięci listę jednomianów wielomianu
- * @param[in] p : wielomian z niepustą tablicą @f$arr@f$
+ * @param[in] p : wielomian
  */
-void DestroyPolyContents(Poly *p) {
-    for (size_t i = 0; i < (*p).size; i++) {
-        Mono curr_mono = (*p).arr[i];
-        if (curr_mono.p.arr != NULL) {
-            DestroyPolyContents(&curr_mono.p);
+void PolyDestroy(Poly *p) {
+    if(p->arr == NULL) return;
+
+    for (size_t i = 0; i < p->size; i++) {
+        Mono curr_mono = p->arr[i];
+        if ((curr_mono.p).arr != NULL) {
+            PolyDestroy(&curr_mono.p);
         }
     }
-    free((*p).arr);
+    free(p->arr);
 }
 
 /**
@@ -96,9 +98,7 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
     Mono *poly_monos = AddMonoArrays(NULL, &monos[0], 0, count, &new_array_size);
     for (size_t i = 0; i < count; i++) {
         Poly p = monos[i].p;
-        if (p.arr != NULL) {
-            DestroyPolyContents(&p);
-        }
+        PolyDestroy(&p);
     }
     return (Poly) {.arr = poly_monos, .size = new_array_size};
 }
