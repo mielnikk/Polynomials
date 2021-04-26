@@ -30,6 +30,8 @@ Poly PolyClone(const Poly *p) {
     return (Poly) {.arr = new_mono_array, .size = p->size};
 }
 
+
+
 /**
  * Przepisuje jednomiany pierwszego wielomianu do nowej tablicy.
  * Dodaje kolejne jednomiany drugiego wielomianu do jednomianów w nowej tablicy,
@@ -147,4 +149,72 @@ poly_exp_t PolyDeg(const Poly *p) {
         }
         return max_deg;
     }
+}
+
+Poly PolyMulCoeff(const Poly *p, const Poly *c) {
+    if (p->arr == NULL) {
+        return (Poly) {.arr = NULL, .coeff = c->coeff * p->coeff};
+    } else {
+        Mono *new_arr = calloc(p->size, sizeof(Mono));
+        for (size_t i = 0; i < p->size; i++) {
+            Mono curr_mono = p->arr[i];
+            new_arr[i].p = PolyMulCoeff(&curr_mono.p, c);
+            new_arr[i].exp = curr_mono.exp;
+        }
+        return (Poly) {.arr = new_arr, .size = p->size};
+    }
+}
+
+Poly PolyNeg(const Poly *p) {
+    Poly neg_one = (Poly) {.arr = NULL, .coeff = -1};
+    return PolyMulCoeff(p, &neg_one);
+}
+
+static void AddMonoToArray(Mono *arr, Mono single_mono,
+                    size_t *last_index, size_t *arr_size) {
+    bool is_added = false;
+    for (size_t i = 0; i <= *last_index; i++) {
+        if (arr[i].exp == single_mono.exp) {
+            arr[i].p = PolyAdd(&(arr[i].p), &single_mono.p);
+            is_added = true;
+            break;
+        }
+    }
+    if (!is_added) {
+        if (*last_index + 1 >= *arr_size) {
+            *arr_size = *arr_size * 2 + 1;
+            arr = realloc(arr, *arr_size * sizeof(Mono));
+        }
+        arr[*last_index] = single_mono;
+        *last_index++;
+    }
+}
+
+static Mono *MulMonoArrays(const Mono *p, const Mono *q,
+                    size_t p_size, size_t q_size, size_t *arr_size) {
+    Mono *new_array = calloc(p_size, sizeof(Mono));
+    size_t allocated_size = p_size;
+    size_t last_index = 0;
+    for (size_t i = 0; i < p_size; i++) {
+        Mono curr_mono = p[i];
+        for (size_t j = 0; j < q_size; j++) {
+            Mono new_mono;
+            new_mono.p = PolyMul(&(curr_mono.p), &(q[j].p));
+            new_mono.exp = curr_mono.exp + q[j].exp;
+            AddMonoToArray(new_array, new_mono, &last_index, &allocated_size);
+        }
+    }
+    *arr_size = last_index;
+    return new_array;
+}
+
+Poly PolyMul(const Poly *p, const Poly *q) {
+    if (p->arr != NULL && q->arr != NULL) {
+        size_t new_array_size;
+        Mono *new_array = MulMonoArrays(p->arr, q->arr, p->size, q->size, &new_array_size);
+        return (Poly) {.arr = new_array, .size = new_array_size};
+    }
+    if (p->arr == NULL && q->arr != NULL) {
+        return PolyMulCoeff(q, p);
+    } else return PolyMulCoeff(p, q);
 }
