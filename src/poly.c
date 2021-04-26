@@ -1,8 +1,33 @@
 #include <stdlib.h>
 #include "poly.h"
 
-size_t max(size_t a, size_t b) {
+static size_t max(size_t a, size_t b) {
     return a > b ? a : b;
+}
+
+/**
+ * Usuwa z pamięci listę jednomianów wielomianu
+ * @param[in] p : wielomian
+ */
+void PolyDestroy(Poly *p) {
+    if (p->arr == NULL) return;
+
+    for (size_t i = 0; i < p->size; i++) {
+        Mono curr_mono = p->arr[i];
+        if ((curr_mono.p).arr != NULL) {
+            PolyDestroy(&curr_mono.p);
+        }
+    }
+    free(p->arr);
+}
+
+Poly PolyClone(const Poly *p) {
+    if (p->arr == NULL) return (Poly) {.arr = NULL, .coeff = p->coeff};
+    Mono *new_mono_array = calloc(p->size, sizeof(Mono));
+    for (size_t i = 0; i < p->size; i++) {
+        new_mono_array[i] = MonoClone(&(p->arr)[i]);
+    }
+    return (Poly) {.arr = new_mono_array, .size = p->size};
 }
 
 /**
@@ -70,22 +95,6 @@ Poly PolyAdd(const Poly *p, const Poly *q) {
 }
 
 /**
- * Usuwa z pamięci listę jednomianów wielomianu
- * @param[in] p : wielomian
- */
-void PolyDestroy(Poly *p) {
-    if(p->arr == NULL) return;
-
-    for (size_t i = 0; i < p->size; i++) {
-        Mono curr_mono = p->arr[i];
-        if ((curr_mono.p).arr != NULL) {
-            PolyDestroy(&curr_mono.p);
-        }
-    }
-    free(p->arr);
-}
-
-/**
  * Tworzy wielomian z listy jednomianów za pomocą dodawania
  * tablicy jednomianów @f$monos@f$ do pustej tablicy.
  * Usuwa zawartość tablicy @f$monos@f$ poprzez usuwanie zawartości
@@ -101,4 +110,41 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
         PolyDestroy(&p);
     }
     return (Poly) {.arr = poly_monos, .size = new_array_size};
+}
+
+poly_exp_t PolyDegBy(const Poly *p, size_t var_idx) {
+    if (var_idx == 0) return PolyDeg(p);
+
+    if (p->arr == NULL) return -1;
+    else {
+        poly_exp_t max_deg = -1;
+        for (size_t i = 0; i < p->size; i++) {
+            Mono curr_mono = p->arr[i];
+            poly_exp_t curr_deg = PolyDegBy(&(curr_mono.p), var_idx - 1);
+
+            if (curr_deg == -1) curr_deg = curr_mono.exp;
+            else curr_deg += curr_mono.exp;
+
+            if (curr_deg > max_deg) max_deg = curr_deg;
+        }
+        return max_deg;
+    }
+}
+
+
+poly_exp_t PolyDeg(const Poly *p) {
+    if (p->arr == NULL) return -1;
+    else {
+        poly_exp_t max_deg = -1;
+        for (size_t i = 0; i < p->size; i++) {
+            Mono curr_mono = p->arr[i];
+            poly_exp_t inner_poly_deg = PolyDeg(&curr_mono.p);
+
+            if (inner_poly_deg == -1) inner_poly_deg = curr_mono.exp;
+            else inner_poly_deg += curr_mono.exp;
+
+            if (max_deg < inner_poly_deg) max_deg = inner_poly_deg;
+        }
+        return max_deg;
+    }
 }
