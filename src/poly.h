@@ -107,7 +107,8 @@ static inline bool PolyIsCoeff(const Poly *p) {
  * @return Czy wielomian jest równy zeru?
  */
 static inline bool PolyIsZero(const Poly *p) {
-  return PolyIsCoeff(p) && p->coeff == 0;
+  return (PolyIsCoeff(p) && p->coeff == 0) ||
+          ((p->arr != NULL) && (p->size == 1 && PolyIsZero(&p->arr[0].p)));
 }
 
 /**
