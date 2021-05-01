@@ -20,7 +20,6 @@ bool PolyExpZero(const Poly *p) {
 
 /**
  * Usuwa z pamięci listę jednomianów wielomianu
- * @param[in] p : wielomian
  */
 void PolyDestroy(Poly *p) {
     if (p->arr == NULL) return;
@@ -60,19 +59,16 @@ Mono *
 AddMonoArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_size, size_t *new_array_size) {
     assert(p_size + q_size != 0);
     Mono *array = calloc(p_size + q_size, sizeof(Mono));
-    size_t index = 0;
-    size_t p_i = 0, q_i = 0;
+    size_t index = 0, p_i = 0, q_i = 0;
     while (p_i != p_size || q_i != q_size) {
         if (p_i == p_size || (q_i != q_size && p[p_i].exp > q[q_i].exp)) {
             if (!PolyIsZero(&q[q_i].p))
                 array[index++] = MonoClone(&q[q_i]);
-
             q_i++;
         }
         else if (q_i == q_size || (p_i != p_size && p[p_i].exp < q[q_i].exp)) {
             if (!PolyIsZero(&p[p_i].p))
                 array[index++] = MonoClone(&p[p_i]);
-
             p_i++;
         }
         else if (p[p_i].exp == q[q_i].exp) {
