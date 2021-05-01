@@ -1,3 +1,9 @@
+/** @file
+ *
+ * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ * @date 2.05.2021
+ */
+
 #include <stdlib.h>
 #include "poly.h"
 
@@ -5,17 +11,35 @@ static poly_exp_t max(poly_exp_t a, poly_exp_t b) {
     return a > b ? a : b;
 }
 
-Poly PolyToCoeff(const Poly *p) {
-    if (p->arr == NULL) return PolyFromCoeff(p->coeff);
-    else return PolyToCoeff(&p->arr[0].p);
+static Mono *SafeMonoMalloc(size_t size){
+    Mono *arr = malloc(size * sizeof(Mono));
+    if (arr == NULL) exit(1);
+    return arr;
 }
 
-bool PolyExpZero(const Poly *p) {
+/**
+ * Sprawdza, czy wielomian jest współczynnkiem zagłębionym w struktury
+ * wielomianów stopnia 0.
+ * @return true, jeśli wielomian ma postać @f$x_0^0(x_1^0(\ldots(c)))@f$
+ */
+static bool PolyIsNestedCoeff(const Poly *p) {
     if (PolyIsCoeff(p))
         return true;
-    if (p->size == 1 && p->arr[0].exp == 0 && PolyExpZero(&p->arr[0].p))
+
+    if (p->size == 1 && p->arr[0].exp == 0 && PolyIsNestedCoeff(&p->arr[0].p))
         return true;
     else return false;
+}
+
+/**
+ * Tworzy wielomian stały na podstawie wielomianu z zagłębionym współczynnkiem.
+ * @param p : wielomian postaci @f$x_0^0(x_1^0(\ldots(c)))@f$
+ * @return wielomian będący współczynnikiem @f$c@f$
+ */
+static Poly PolyToCoeff(const Poly *p) {
+    assert(PolyIsNestedCoeff(p));
+    if (p->arr == NULL) return PolyFromCoeff(p->coeff);
+    else return PolyToCoeff(&p->arr[0].p);
 }
 
 /**
@@ -55,10 +79,10 @@ static int MonoExpCmp(const void *a, const void *b) {
     return 1;
 }
 
-Mono *
-AddMonoArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_size, size_t *new_array_size) {
+static Mono *AddMonoArrays
+        (const Mono *p, const Mono *q, size_t p_size, size_t q_size, size_t *new_array_size) {
     assert(p_size + q_size != 0);
-    Mono *array = calloc(p_size + q_size, sizeof(Mono));
+    Mono *array = SafeMonoMalloc(p_size + q_size);
     size_t index = 0, p_i = 0, q_i = 0;
     while (p_i != p_size || q_i != q_size) {
         if (p_i == p_size || (q_i != q_size && p[p_i].exp > q[q_i].exp)) {
@@ -73,12 +97,11 @@ AddMonoArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_size, size_t
         }
         else if (p[p_i].exp == q[q_i].exp) {
             Mono new_mono = (Mono) {.exp = p[p_i].exp, .p = PolyAdd(&p[p_i].p, &q[q_i].p)};
-            if (!PolyIsZero(&new_mono.p)) {
+            if (!PolyIsZero(&new_mono.p))
                 array[index++] = new_mono;
-            }
-            else {
+            else
                 MonoDestroy(&new_mono);
-            }
+
             p_i++;
             q_i++;
         }
@@ -87,7 +110,7 @@ AddMonoArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_size, size_t
     return array;
 }
 
-Mono *MonoAddCoeff(const Poly *p, const Poly *c, size_t *new_array_size) {
+static Mono *MonoAddCoeff(const Poly *p, const Poly *c, size_t *new_array_size) {
     Mono temp_arr[1];
     temp_arr[0] = MonoFromPoly(c, 0);
     return AddMonoArrays(&temp_arr[0], p->arr, 1, p->size, new_array_size);
@@ -116,28 +139,23 @@ Poly PolySub(const Poly *p, const Poly *q) {
     PolyDestroy(&q2);
     return result;
 }
-
-Mono *CopyMonosArray(size_t *count, const Mono *monos) {
+// zakładam, że zerowy monos nie jest zagłębiony bardziej niż x^costam * 0
+static Mono *CopyMonosArray(size_t *count, const Mono *monos) {
     assert(*count != 0);
-    Mono *array = calloc(*count, sizeof(Mono));
+    Mono *array = SafeMonoMalloc(*count);
     size_t last_index = 0;
     for (size_t i = 0; i < *count; i++) {
-        if (!PolyIsZero(&monos[i].p)) {
+        if (!PolyIsZero(&monos[i].p))
             array[last_index++] = monos[i];
-        }
-        else { // idk czy to potrzebne
-            Mono m = monos[i];
-            MonoDestroy(&m);
-        }
     }
     *count = last_index;
     return array;
 }
 
-Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size) {
+static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size) {
     assert(size != 0);
     size_t index = 0;
-    Mono *array = calloc(size, sizeof(Mono));
+    Mono *array = SafeMonoMalloc(size);
     qsort(monos, size, sizeof(Mono), MonoExpCmp);
     array[index] = monos[0];
     for (size_t i = 1; i < size; i++) {
@@ -215,7 +233,7 @@ Poly PolyNeg(const Poly *p) {
     if (PolyIsCoeff(p))
         return PolyFromCoeff((-1) * p->coeff);
 
-    Mono *new_mono_array = malloc(p->size * sizeof(Mono));
+    Mono *new_mono_array = SafeMonoMalloc(p->size);
     for (size_t i = 0; i < p->size; i++) {
         Mono new_mono = {.exp = p->arr[i].exp, .p = PolyNeg(&p->arr[i].p)};
         new_mono_array[i] = new_mono;
@@ -223,7 +241,7 @@ Poly PolyNeg(const Poly *p) {
     return (Poly) {.arr = new_mono_array, .size = p->size};
 }
 
-Poly PolyMulByCoeff(const Poly *p, poly_coeff_t c) {
+static Poly PolyMulByCoeff(const Poly *p, poly_coeff_t c) {
     if (c == 0) return PolyZero();
 
     if (PolyIsCoeff(p))
@@ -235,7 +253,7 @@ Poly PolyMulByCoeff(const Poly *p, poly_coeff_t c) {
         new_mono_array[i] = new_mono;
     }
     Poly new_poly = (Poly) {.arr = new_mono_array, .size = p->size};
-    if (PolyIsZero(&new_poly)){
+    if (PolyIsZero(&new_poly)) {
         PolyDestroy(&new_poly);
         return PolyZero();
     }
@@ -247,7 +265,7 @@ static Poly PolyMulArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_
     size_t index = 0;
     Poly poly_accumulator = PolyZero();
     for (size_t i = 0; i < p_size; i++) {
-        Mono *new_array = malloc(q_size * sizeof(Mono));
+        Mono *new_array = SafeMonoMalloc(q_size);
         Mono curr_mono = p[i];
         for (size_t j = 0; j < q_size; j++) {
             Mono new_mono;
