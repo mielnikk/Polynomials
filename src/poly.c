@@ -7,10 +7,15 @@
 #include <stdlib.h>
 #include "poly.h"
 
-static poly_exp_t max(poly_exp_t a, poly_exp_t b) {
+static poly_exp_t Max(poly_exp_t a, poly_exp_t b) {
     return a > b ? a : b;
 }
 
+/**
+ * Bezpieczniejsze alokowanie pamięci.
+ * @param size : rozmiar tablicy, którą trzeba zaalokować
+ * @return : tablica o rozmiarze @p size
+ */
 static Mono *SafeMonoMalloc(size_t size){
     Mono *arr = malloc(size * sizeof(Mono));
     if (arr == NULL) exit(1);
@@ -20,7 +25,7 @@ static Mono *SafeMonoMalloc(size_t size){
 /**
  * Sprawdza, czy wielomian jest współczynnkiem zagłębionym w struktury
  * wielomianów stopnia 0.
- * @return true, jeśli wielomian ma postać @f$x_0^0(x_1^0(\ldots(c)))@f$
+ * @return Czy wielomian ma postać @f$x_0^0(x_1^0(\ldots(c)))@f$?
  */
 static bool PolyIsNestedCoeff(const Poly *p) {
     if (PolyIsCoeff(p))
@@ -42,9 +47,6 @@ static Poly PolyToCoeff(const Poly *p) {
     else return PolyToCoeff(&p->arr[0].p);
 }
 
-/**
- * Usuwa z pamięci listę jednomianów wielomianu
- */
 void PolyDestroy(Poly *p) {
     if (p->arr == NULL) return;
 
@@ -79,12 +81,25 @@ static int MonoExpCmp(const void *a, const void *b) {
     return 1;
 }
 
+/**
+ * @brief Dodaje jednomiany z dwóch tablic.
+ * Zakłada, że jednomiany są posortowane rosnąco względem wykładników oraz, że
+ * w obu tablicach wykładniki jednomianów są parami różne.
+ * @param p : tablica jednomianów
+ * @param q : tablica jednomianów
+ * @param p_size : rozmiar tablicy @p p
+ * @param q_size : rozmiar tablicy @p q
+ * @param array_size wskaźnik na wartość, do której zostaje wpisana liczba
+ * różnych jednomianów zapisanych w tablicy wynikowej
+ * @return tablica jednomianów
+ */
 static Mono *AddMonoArrays
-        (const Mono *p, const Mono *q, size_t p_size, size_t q_size, size_t *new_array_size) {
+        (const Mono *p, const Mono *q, size_t p_size, size_t q_size, size_t *array_size) {
     assert(p_size + q_size != 0);
     Mono *array = SafeMonoMalloc(p_size + q_size);
     size_t index = 0, p_i = 0, q_i = 0;
     while (p_i != p_size || q_i != q_size) {
+        /* Wpisuje kopię wielomianu o mniejszym wykładniku */
         if (p_i == p_size || (q_i != q_size && p[p_i].exp > q[q_i].exp)) {
             if (!PolyIsZero(&q[q_i].p))
                 array[index++] = MonoClone(&q[q_i]);
@@ -95,6 +110,8 @@ static Mono *AddMonoArrays
                 array[index++] = MonoClone(&p[p_i]);
             p_i++;
         }
+        /* Gdy w obu tablicach są jednomiany o tym samym wykładniku, w tablicy
+         * zostaje zapisana ich suma (o ile nie jest zerem) */
         else if (p[p_i].exp == q[q_i].exp) {
             Mono new_mono = (Mono) {.exp = p[p_i].exp, .p = PolyAdd(&p[p_i].p, &q[q_i].p)};
             if (!PolyIsZero(&new_mono.p))
@@ -106,14 +123,25 @@ static Mono *AddMonoArrays
             q_i++;
         }
     }
-    (*new_array_size) = index;
+    (*array_size) = index;
     return array;
 }
 
-static Mono *MonoAddCoeff(const Poly *p, const Poly *c, size_t *new_array_size) {
+/**
+ * @brief Dodaje wielomian stały do tablicy jednomianów.
+ * Przekształca współczynnik @p c w jednomian oraz dodaje go do tablicy
+ * jednomianów @p p.
+ * @param p : tablica jednomianów
+ * @param p_size : rozmiar tablicy @p p
+ * @param c : wielomian stały
+ * @param new_array_size : rozmiar wynikowej tablicy
+ * @return tablica zawierająca elementy @p p oraz @f$c*x^0@f$
+ */
+static Mono *MonosAddCoeff(const Mono* p, size_t p_size, const Poly *c, size_t *new_array_size) {
+    assert(PolyIsCoeff(c));
     Mono temp_arr[1];
     temp_arr[0] = MonoFromPoly(c, 0);
-    return AddMonoArrays(&temp_arr[0], p->arr, 1, p->size, new_array_size);
+    return AddMonoArrays(&temp_arr[0], p, 1, p_size, new_array_size);
 }
 
 Poly PolyAddCoeff(const Poly *p, const Poly *c) {
@@ -139,19 +167,34 @@ Poly PolySub(const Poly *p, const Poly *q) {
     PolyDestroy(&q2);
     return result;
 }
-// zakładam, że zerowy monos nie jest zagłębiony bardziej niż x^costam * 0
-static Mono *CopyMonosArray(size_t *count, const Mono *monos) {
-    assert(*count != 0);
-    Mono *array = SafeMonoMalloc(*count);
+
+/**
+ * Tworzy kopię tablicy jednomianów bez jednomianów o współczynnikach równych zero.
+ * @param count : rozmiar tablicy @p monos
+ * @param monos : tablica jednomianów
+ * @param copy_size : liczba jednomianów wpisanych do nowej tablicy
+ * @return kopia tablicy @p monos, ale bez jednomianów o zerowych współczynnikach
+ */
+static Mono *CopyMonosArray(size_t count, const Mono *monos, size_t *copy_size) {
+    assert(count != 0);
+    Mono *array = SafeMonoMalloc(count);
     size_t last_index = 0;
-    for (size_t i = 0; i < *count; i++) {
+    for (size_t i = 0; i < count; i++) {
         if (!PolyIsZero(&monos[i].p))
             array[last_index++] = monos[i];
+        /* Z założeń, monos[i].p nie jest "zagłębionym" zerem, więc nie wywołuje PolyDestroy */
     }
-    *count = last_index;
+    *copy_size = last_index;
     return array;
 }
-
+/**
+ * Upraszcza tablicę @p monos tak, aby wykładniki jednomianów były parami różne.
+ * Przejmuje zawartość @p monos na własność.
+ * @param monos : tablica jednomianów
+ * @param size : rozmiar tablicy @p monos
+ * @param new_size : rozmiar tablicy wynikowej
+ * @return tablica jednomianów posortowana rosnąco po wykładnikach
+ */
 static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size) {
     assert(size != 0);
     size_t index = 0;
@@ -166,11 +209,14 @@ static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size) {
             PolyDestroy(&curr_poly);
         }
         else {
+            /* Jeśli ostatnio dodany jednomian ma zerowy współczynnik, nadpisuje
+             * go następnym jednomianem */
             if (!PolyIsZero(&array[index].p))
                 index++;
             array[index] = monos[i];
         }
     }
+    /* Sprawdza, czy ostatni jednomian ma zerowy współczynnik */
     if (PolyIsZero(&array[index].p))
         index--;
     *new_size = index + 1;
@@ -203,7 +249,7 @@ poly_exp_t PolyDegBy(const Poly *p, size_t var_idx) {
             else
                 curr_deg = curr_mono.exp;
 
-            max_deg = max(max_deg, curr_deg);
+            max_deg = Max(max_deg, curr_deg);
         }
         return max_deg;
     }
@@ -223,7 +269,7 @@ poly_exp_t PolyDeg(const Poly *p) {
             if (inner_poly_deg != -1)
                 inner_poly_deg += curr_mono.exp;
 
-            max_deg = max(max_deg, inner_poly_deg);
+            max_deg = Max(max_deg, inner_poly_deg);
         }
         return max_deg;
     }
@@ -241,6 +287,14 @@ Poly PolyNeg(const Poly *p) {
     return (Poly) {.arr = new_mono_array, .size = p->size};
 }
 
+/**
+ * @brief Mnoży wielomian przez liczbę.
+ * Dodatkowo, sprawdza czy przy mnożeniu czegoś niezerowego nie doszło do
+ * overflow i wielomian nie ma zerowych współczynników.
+ * @param p : wielomian
+ * @param c : współczynnik
+ * @return @f$ p\cdot c@f$
+ */
 static Poly PolyMulByCoeff(const Poly *p, poly_coeff_t c) {
     if (c == 0) return PolyZero();
 
@@ -253,6 +307,9 @@ static Poly PolyMulByCoeff(const Poly *p, poly_coeff_t c) {
         new_mono_array[i] = new_mono;
     }
     Poly new_poly = (Poly) {.arr = new_mono_array, .size = p->size};
+
+    /* Sprawdza, czy przy mnożeniu czegoś niezerowego nie doszło do overflow
+     * i wielomian nie ma zerowych współczynników. */
     if (PolyIsZero(&new_poly)) {
         PolyDestroy(&new_poly);
         return PolyZero();
@@ -260,6 +317,15 @@ static Poly PolyMulByCoeff(const Poly *p, poly_coeff_t c) {
     else return new_poly;
 }
 
+/**
+ * Mnoży dwie tablice jednomianów oraz na podstawie tablicy wynikowej tworzy
+ * wielomian.
+ * @param p : tablica jednomianów
+ * @param q : tablica jednomianów
+ * @param p_size : rozmiar tablicy @p p
+ * @param q_size : rozmiar tablicy @p q
+ * @return wielomian o wspólczynniku w postaci iloczynu tablic @p p i @p q
+ */
 static Poly PolyMulArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_size) {
     assert(p != NULL && q != NULL);
     size_t index = 0;
@@ -267,6 +333,7 @@ static Poly PolyMulArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_
     for (size_t i = 0; i < p_size; i++) {
         Mono *new_array = SafeMonoMalloc(q_size);
         Mono curr_mono = p[i];
+        /* Mnoży tablicę q przez obecny jednomian */
         for (size_t j = 0; j < q_size; j++) {
             Mono new_mono;
             new_mono.p = PolyMul(&(curr_mono.p), &(q[j].p));
@@ -274,6 +341,7 @@ static Poly PolyMulArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_
             index++;
             new_array[j] = new_mono;
         }
+        /* Dodaje wynik operacji do wielomianu gromadzącego sumy wyników */
         Poly temp_poly = (Poly) {.arr = new_array, .size = q_size};
         Poly new_poly = PolyAdd(&poly_accumulator, &temp_poly);
         PolyDestroy(&poly_accumulator);
