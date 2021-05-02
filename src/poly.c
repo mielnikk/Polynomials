@@ -300,35 +300,6 @@ Poly PolyNeg(const Poly *p) {
 }
 
 /**
- * Mnoży wielomian przez liczbę.
- * @param[in] p : wielomian
- * @param[in] c : współczynnik
- * @return @f$ p\cdot c@f$
- */
-static Poly PolyMulByCoeff(const Poly *p, poly_coeff_t c) {
-    if (c == 0) return PolyZero();
-
-    if (PolyIsCoeff(p))
-        return PolyFromCoeff(c * p->coeff);
-
-    Mono *new_mono_array = malloc(p->size * sizeof(Mono));
-    for (size_t i = 0; i < p->size; i++) {
-        Mono new_mono = {.exp = p->arr[i].exp, .p = PolyMulByCoeff(&p->arr[i].p, c)};
-        new_mono_array[i] = new_mono;
-    }
-    Poly new_poly = (Poly) {.arr = new_mono_array, .size = p->size};
-
-    /* Sprawdza, czy przy mnożeniu czegoś niezerowego nie doszło do overflow
-     * i wielomian nie ma zerowych współczynników. */
-    if (PolyIsZero(&new_poly)) {
-        PolyDestroy(&new_poly);
-        return PolyZero();
-    }
-
-    else return new_poly;
-}
-
-/**
  * Mnoży dwie tablice jednomianów oraz na podstawie tablicy wynikowej tworzy
  * wielomian.
  * @param[in] p : tablica jednomianów
@@ -358,6 +329,37 @@ static Poly PolyMulArrays(const Mono *p, const Mono *q, size_t p_size, size_t q_
         PolyDestroy(&temp_poly);
     }
     return poly_accumulator;
+}
+
+/**
+ * Mnoży wielomian przez liczbę.
+ * @param[in] p : wielomian
+ * @param[in] c : współczynnik
+ * @return @f$ p\cdot c@f$
+ */
+static Poly PolyMulByCoeff(const Poly *p, poly_coeff_t c) {
+    if (c == 0) return PolyZero();
+
+    if (PolyIsCoeff(p))
+        return PolyFromCoeff(c * p->coeff);
+
+    Mono *new_mono_array = malloc(p->size * sizeof(Mono));
+    size_t index = 0;
+    for (size_t i = 0; i < p->size; i++) {
+        Mono new_mono = {.exp = p->arr[i].exp, .p = PolyMulByCoeff(&p->arr[i].p, c)};
+        if (!PolyIsZero(&new_mono.p))
+            new_mono_array[index++] = new_mono;
+    }
+    Poly new_poly = (Poly) {.arr = new_mono_array, .size = index};
+
+    /* Sprawdza, czy przy mnożeniu czegoś niezerowego nie doszło do overflow
+     * i wielomian nie ma zerowych współczynników. */
+    if (index == 0) {
+        free(new_mono_array);
+        return PolyZero();
+    }
+
+    else return new_poly;
 }
 
 Poly PolyMul(const Poly *p, const Poly *q) {
