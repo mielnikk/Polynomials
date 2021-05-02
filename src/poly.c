@@ -66,22 +66,21 @@ static Poly PolyToCoeff(const Poly *p) {
 }
 
 void PolyDestroy(Poly *p) {
-    if (p->arr == NULL) return;
-
-    for (size_t i = 0; i < p->size; i++) {
-        Mono curr_mono = p->arr[i];
-        if ((curr_mono.p).arr != NULL) {
-            PolyDestroy(&curr_mono.p);
+    if (!PolyIsCoeff(p)) {
+        for (size_t i = 0; i < p->size; i++) {
+            MonoDestroy(&p->arr[i]);
         }
+        free(p->arr);
     }
-    free(p->arr);
 }
 
 Poly PolyClone(const Poly *p) {
-    if (p->arr == NULL) return (Poly) {.arr = NULL, .coeff = p->coeff};
-    Mono *new_mono_array = calloc(p->size, sizeof(Mono));
+    if (PolyIsCoeff(p))
+        return PolyFromCoeff(p->coeff);
+
+    Mono *new_mono_array = SafeMonoMalloc(p->size);
     for (size_t i = 0; i < p->size; i++) {
-        new_mono_array[i] = MonoClone(&(p->arr)[i]);
+        new_mono_array[i] = MonoClone(&p->arr[i]);
     }
     return (Poly) {.arr = new_mono_array, .size = p->size};
 }
@@ -157,21 +156,34 @@ static Mono *MonosAddCoeff(const Mono *p, size_t p_size, const Poly *c, size_t *
     return AddMonoArrays(&temp, p, 1, p_size, new_array_size);
 }
 
-Poly PolyAddCoeff(const Poly *p, const Poly *c) {
-    Mono *new_mono_array = calloc(p->size + 1, sizeof(Mono));
-    size_t exp_zero_index = p->size;
-    for (size_t i = 0; i < p->size; i++) {
-        if ((p->arr[i]).exp == 0) exp_zero_index = i;
-        new_mono_array[i] = p->arr[i];
+
+Poly PolyAdd(const Poly *p, const Poly *q) {
+    if (PolyIsCoeff(p) && PolyIsCoeff(q))
+        return PolyFromCoeff(p->coeff + q->coeff);
+
+    size_t new_array_size;
+    Mono *new_array;
+
+    if (!PolyIsCoeff(p) && !PolyIsCoeff(q))
+        new_array = AddMonoArrays(p->arr, q->arr, p->size, q->size, &new_array_size);
+    else if (PolyIsCoeff(p) && !PolyIsCoeff(q))
+        new_array = MonosAddCoeff(q->arr, q->size, p, &new_array_size);
+    else
+        new_array = MonosAddCoeff(p->arr, p->size, q, &new_array_size);
+
+    /* Jeśli suma wszystkich wykładników jest zerem */
+    if (new_array_size == 0) {
+        free(new_array);
+        return PolyZero();
     }
-    if (exp_zero_index == p->size) {
-        new_mono_array[exp_zero_index] = MonoFromPoly(c, 0);
-    } else {
-        Poly newPoly = PolyAdd(&new_mono_array[exp_zero_index].p, c);
-        new_mono_array[exp_zero_index].p = newPoly;
+    /* Uproszczenie wielomianu */
+    Poly new_poly = (Poly) {.arr = new_array, .size = new_array_size};
+    if (PolyIsNestedCoeff(&new_poly)) {
+        Poly simplified_poly = PolyToCoeff(&new_poly);
+        PolyDestroy(&new_poly);
+        return simplified_poly;
     }
-    size_t new_array_size = max(p->size, exp_zero_index + 1);
-    return (Poly) {.arr = new_mono_array, .size = new_array_size};
+    else return new_poly;
 }
 
 Poly PolySub(const Poly *p, const Poly *q) {
@@ -238,14 +250,32 @@ static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size) {
 }
 
 Poly PolyAddMonos(size_t count, const Mono monos[]) {
-    if (count == 0) return (Poly) {.arr = NULL, .coeff = 0};
-    size_t new_array_size;
-    Mono *poly_monos = AddMonoArrays(NULL, &monos[0], 0, count, &new_array_size);
-    for (size_t i = 0; i < count; i++) {
-        Poly p = monos[i].p;
-        PolyDestroy(&p);
+    if (count == 0)
+        return PolyZero();
+
+    size_t new_size = 0, copy_size = 0;
+    Mono *new, *monos_copy = CopyMonosArray(count, monos, &copy_size);
+    /* Gdy w monos[] wszystko było zerami */
+    if (copy_size == 0) {
+        free(monos_copy);
+        return PolyZero();
     }
-    return (Poly) {.arr = poly_monos, .size = new_array_size};
+
+    new = SimplifyMonos(monos_copy, copy_size, &new_size);
+    free(monos_copy);
+    /* Gdy wszystko uprościło się do zera */
+    if (new_size == 0) {
+        free(new);
+        return PolyZero();
+    }
+
+    Poly poly = (Poly) {.arr = new, .size = new_size};
+    if (PolyIsNestedCoeff(&poly)) {
+        Poly new_poly = PolyToCoeff(&poly);
+        PolyDestroy(&poly);
+        return new_poly;
+    }
+    return poly;
 }
 
 poly_exp_t PolyDegBy(const Poly *p, size_t var_idx) {
@@ -373,4 +403,58 @@ Poly PolyMul(const Poly *p, const Poly *q) {
         return PolyMulByCoeff(q, p->coeff);
 
     else return PolyMulByCoeff(p, q->coeff);
+}
+
+bool PolyIsEq(const Poly *p, const Poly *q) {
+    if (PolyIsCoeff(p) != PolyIsCoeff(q))
+        return false;
+
+    if (PolyIsCoeff(p))
+        return p->coeff == q->coeff;
+
+    if (p->size != q->size)
+        return false;
+
+    for (size_t i = 0; i < p->size; i++) {
+        if (p->arr[i].exp != q->arr[i].exp
+            || !PolyIsEq(&p->arr[i].p, &q->arr[i].p))
+            return false;
+    }
+    return true;
+}
+
+/**
+ * Szybkie potęgowanie.
+ * @param[in] base : podstawa
+ * @param[in] exp : wykładnik
+ * @return @f$ base^{exp}@f$
+ */
+static poly_coeff_t QuickPow(poly_coeff_t base, poly_coeff_t exp) {
+    if (exp == 0)
+        return 1;
+    if (exp % 2 == 1)
+        return base * QuickPow(base, exp - 1);
+    poly_coeff_t result = QuickPow(base, exp / 2);
+    return result * result;
+}
+
+Poly PolyAt(const Poly *p, poly_coeff_t x) {
+    if (PolyIsZero(p))
+        return PolyZero();
+    if (PolyIsCoeff(p))
+        return PolyFromCoeff(p->coeff);
+
+    /* Wielomian, do którego są dodawane kolejne współczynniki po pomnożeniu przez x */
+    Poly result = PolyZero();
+
+    for (size_t i = 0; i < p->size; i++) {
+        poly_coeff_t coeff = QuickPow(x, p->arr[i].exp);
+        Poly multiplied_poly = PolyMulByCoeff(&p->arr[i].p, coeff);
+
+        Poly prev_result = result;
+        result = PolyAdd(&result, &multiplied_poly);
+        PolyDestroy(&prev_result);
+        PolyDestroy(&multiplied_poly);
+    }
+    return result;
 }
