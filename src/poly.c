@@ -90,7 +90,7 @@ static int MonoExpCmp(const void *a, const void *b) {
  * @param p_size : rozmiar tablicy @p p
  * @param q_size : rozmiar tablicy @p q
  * @param array_size wskaźnik na wartość, do której zostaje wpisana liczba
- * różnych jednomianów zapisanych w tablicy wynikowej
+ * różnych jednomianów w tablicy wynikowej
  * @return tablica jednomianów
  */
 static Mono *AddMonoArrays
@@ -118,7 +118,6 @@ static Mono *AddMonoArrays
                 array[index++] = new_mono;
             else
                 MonoDestroy(&new_mono);
-
             p_i++;
             q_i++;
         }
@@ -139,9 +138,8 @@ static Mono *AddMonoArrays
  */
 static Mono *MonosAddCoeff(const Mono* p, size_t p_size, const Poly *c, size_t *new_array_size) {
     assert(PolyIsCoeff(c));
-    Mono temp_arr[1];
-    temp_arr[0] = MonoFromPoly(c, 0);
-    return AddMonoArrays(&temp_arr[0], p, 1, p_size, new_array_size);
+    Mono temp_arr = MonoFromPoly(c, 0);
+    return AddMonoArrays(&temp_arr, p, 1, p_size, new_array_size);
 }
 
 Poly PolyAddCoeff(const Poly *p, const Poly *c) {
