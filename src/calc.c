@@ -356,7 +356,7 @@ bool ParseCoeff(Poly *p, char *line, char **endptr) {
 /**
  * Na podstawie napisu @p line tworzy wielomian, który zapisuje w zmiennej @p p.
  * Zwraca @p false, jeśli w zapisie wielomianu wystąpił błąd, w przeciwnym
- * przypadku zwraca @true. Pierwszy znak, który wystąpi po wielomianie, zapisuje
+ * przypadku zwraca @p true. Pierwszy znak, który wystąpi po wielomianie, zapisuje
  * w @p endptr.
  * @param[in,out] p : wielomian
  * @param[in] line : linia, czyli ciąg znaków
