@@ -126,7 +126,6 @@ void ParseAt(Stack *s, char *arg, long line_number) {
 
 void ParseCommand(Stack *s, char *line, size_t line_size, long line_number) {
     char *arg = GetArg(line, line_size);
-    RemoveNewline(line, &line_size);
     if (strcmp("DEG_BY", line) == 0) {
         TryDegBy(s, arg, line_number);
         return;
@@ -157,13 +156,13 @@ void ParseCommand(Stack *s, char *line, size_t line_size, long line_number) {
  * @param[in] s_length : długość ciągu znaków
  * @return wykładnik jednomianu
  */
-static poly_exp_t StringToPolyExp(char *s, char **endptr, long s_length) {
+static poly_exp_t StringToPolyExp(char *s, char **endptr, size_t s_length) {
     if (!isdigit(s[0])){
         *endptr = NULL;
         return 0;
     }
     *endptr = s;
-    long index = 0;
+    size_t index = 0;
     poly_exp_t exp = 0;
     while (index < s_length && s[index] != ')') {
         if (isdigit(s[index])) {
@@ -201,9 +200,9 @@ size_t CountMonos(const char *line) {
     return monos_counter;
 }
 
-static bool ParsePoly(Poly *p, char *line, long line_length, char **endptr);
+static bool ParsePoly(Poly *p, char *line, size_t line_length, char **endptr);
 
-static bool ParseMono(Mono *n, char *line, long line_length, char **endptr) {
+static bool ParseMono(Mono *n, char *line, size_t line_length, char **endptr) {
     if (line[0] != '(')
         return false;
 
@@ -249,14 +248,14 @@ bool ParseCoeff(Poly *p, char *line, char **endptr) {
         errno = 0;
         return false;
     }
-    if (*endptr[0] != ',' && *endptr[0] != '\n' && *endptr[0] != '\0')
+    if (*endptr[0] != ',' && *endptr[0] != '\0')
         return false;
     *p = PolyFromCoeff(poly_coeff);
     return true;
 }
 
 
-static bool ParsePoly(Poly *p, char *line, long line_length, char **endptr) {
+static bool ParsePoly(Poly *p, char *line, size_t line_length, char **endptr) {
     p->arr = NULL;
     p->size = 0;
     p->coeff = 0;
@@ -265,10 +264,10 @@ static bool ParsePoly(Poly *p, char *line, long line_length, char **endptr) {
         return ParseCoeff(p, line, endptr);
 
     bool plus = false;
-    long index = 0;
+    size_t index = 0;
     size_t monos_size = CountMonos(line);
     p->arr = malloc(monos_size * sizeof(Mono));
-    while (index < line_length && line[index] != '\n' && line[index] != ',') {
+    while (index < line_length && line[index] != '\0' && line[index] != ',') {
         if (plus) {
             *endptr = (line + index);
             if (line[index] != '+' || (line[index] == '+' && line[index + 1] != '(')) {
@@ -288,8 +287,7 @@ static bool ParsePoly(Poly *p, char *line, long line_length, char **endptr) {
         p->arr[p->size++] = m;
         index = *endptr - line;
         plus = true;
-        if ((*endptr)[0] == '\n' || (*endptr)[0] == '+' || (*endptr)[0] == ',' ||
-            (*endptr)[0] == '\0') {
+        if ((*endptr)[0] == '+' || (*endptr)[0] == ',' || (*endptr)[0] == '\0') {
             continue;
         }
         else {
@@ -298,7 +296,7 @@ static bool ParsePoly(Poly *p, char *line, long line_length, char **endptr) {
         }
     }
     *endptr = (line + index);
-    if (line[index] != '\n' && line[index] != ',' && line[index] != '\0') {
+    if (line[index] != ',' && line[index] != '\0') {
         PolyDestroy(p);
         return false;
     }
@@ -324,8 +322,7 @@ bool CheckInitialValidity(const char *line) {
         if (line[index] == '(')
             bracket_counter++;
         else if (line[index] == ')') {
-            if (line[index + 1] != '\n' && line[index + 1] != '\0' && line[index + 1] != ',' &&
-                line[index + 1] != '+')
+            if (line[index + 1] != '\0' && line[index + 1] != ',' && line[index + 1] != '+')
                 return false;
             bracket_counter--;
         }
@@ -337,7 +334,7 @@ bool CheckInitialValidity(const char *line) {
     return bracket_counter == 0;
 }
 
-void ParseInputPoly(Stack *s, char *line, long line_length, long line_number) {
+void ParseInputPoly(Stack *s, char *line, size_t line_length, long line_number) {
     char *endptr;
     Poly poly;
     if (!CheckInitialValidity(line)) {
@@ -368,10 +365,16 @@ void ReadInput(Stack *s) {
         if (characters > 0 && (buff[0] == '#' || buff[0] == '\n'))
             continue;
 
+        size_t line_length = (size_t) characters;
+        RemoveNewline(buff, &line_length);
+
+        if(line_length == 0)
+            continue;
+
         if (isalpha(buff[0]))
-            ParseCommand(s, buff, characters, line_number);
+            ParseCommand(s, buff, line_length, line_number);
         else
-            ParseInputPoly(s, buff, characters, line_number);
+            ParseInputPoly(s, buff, line_length, line_number);
     }
 
     if (errno != 0)
