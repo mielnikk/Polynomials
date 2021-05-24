@@ -90,7 +90,7 @@ bool IsEq(Stack *s);
 
 /**
  * Wypisuje na standardowe wyjście stopień wielomianu z góry stosu.
- * Gdy na stosie nie ma żadnych wielomianów, nie wypisuje nic oraz zwraca @false.
+ * Gdy na stosie nie ma żadnych wielomianów, nie wypisuje nic oraz zwraca @p false.
  * @param[in,out] s : stos
  * @return Czy operacja się powiodła?
  */
@@ -118,7 +118,7 @@ bool At(Stack *s, poly_coeff_t x);
 /**
  * Zdejmuje wielomian z góry stosu i usuwa go. Jeśli na stosie nie było żadnych
  * elementów zwraca @p false. W przeciwnym wypadku, po wykonaniu operacji,
- * zwraca @true.
+ * zwraca @p true.
  * @param[in,out] s : stos
  * @return Czy operacja się powiodła?
  */

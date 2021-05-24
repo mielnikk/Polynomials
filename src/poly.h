@@ -112,6 +112,13 @@ static inline bool PolyIsZero(const Poly *p) {
 }
 
 /**
+ * Bezpieczniejsze alokowanie tablicy jednomianów.
+ * @param[in] size : rozmiar tablicy, którą trzeba zaalokować
+ * @return tablica o rozmiarze @p size
+ */
+Mono *SafeMonoMalloc(size_t size);
+
+/**
  * Usuwa wielomian z pamięci.
  * @param[in] p : wielomian
  */

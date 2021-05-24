@@ -6,8 +6,12 @@
 #include <stdlib.h>
 #include "stack.h"
 
-#define INITIAL_STACK_SIZE 16
+#define INITIAL_STACK_ARR_SIZE 16 ///< Początkowy rozmiar tablicy stosu.
 
+/**
+ * Powiększa dwukrotnie tablicę stosu @p s.
+ * @param s : stos
+ */
 static void IncreaseStackSize(Stack *s) {
     s->arr_size *= 2;
     Poly *temp_arr = realloc(s->arr, s->arr_size * sizeof(Poly));
@@ -58,13 +62,13 @@ Poly SecondTop(Stack *s) {
 
 Stack GetNewStack() {
     Stack s;
-    Poly *arr = malloc(INITIAL_STACK_SIZE * sizeof(Poly));
+    Poly *arr = malloc(INITIAL_STACK_ARR_SIZE * sizeof(Poly));
     if (arr == NULL)
         exit(1);
     else
         s.arr = arr;
     s.size = 0;
-    s.arr_size = INITIAL_STACK_SIZE;
+    s.arr_size = INITIAL_STACK_ARR_SIZE;
     return s;
 }
 

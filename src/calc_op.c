@@ -145,7 +145,7 @@ static void PrintPoly(Poly p);
 static void PrintMono(Mono m) {
     printf("(");
     PrintPoly(m.p);
-    fprintf(stdout,",%d)", m.exp);
+    printf(",%d)", m.exp);
 }
 
 /**
@@ -154,7 +154,7 @@ static void PrintMono(Mono m) {
  */
 static void PrintPoly(Poly p) {
     if (PolyIsCoeff(&p))
-        fprintf(stdout,"%ld", p.coeff);
+        printf("%ld", p.coeff);
     else {
         for (size_t i = 0; i < p.size; i++) {
             PrintMono(p.arr[i]);

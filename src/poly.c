@@ -26,12 +26,7 @@ static poly_exp_t MaxExp(poly_exp_t a, poly_exp_t b) {
     return a > b ? a : b;
 }
 
-/**
- * Bezpieczniejsze alokowanie pamięci.
- * @param[in] size : rozmiar tablicy, którą trzeba zaalokować
- * @return tablica o rozmiarze @p size
- */
-static Mono *SafeMonoMalloc(size_t size) {
+Mono *SafeMonoMalloc(size_t size) {
     Mono *arr = malloc(size * sizeof(Mono));
     if (arr == NULL) exit(1);
     return arr;
