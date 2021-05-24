@@ -4,7 +4,7 @@
  * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
  */
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#define _GNU_SOURCE ///< Wymagane do poprawnego działania funkcji getline.
 #endif
 
 #include <stdlib.h>
@@ -23,7 +23,7 @@
 
 /**
  * Struktura przechowująca operację na stosie, która nie przyjmuje dodatkowych
- * argumentów, oraz odpowiadjącą jej nazwę polecenia.
+ * argumentów, oraz odpowiadającą jej nazwę polecenia.
  */
 typedef struct {
     char *name; ///< Nazwa polecenia
@@ -69,7 +69,7 @@ const char *AtCommandName = "AT";
  * wyjście diagnostyczne.
  * @param[in] line_number : numer linii, w której wystąpił błąd
  */
-static void PrintWrongPolyError(long line_number){
+static void PrintWrongPolyError(long line_number) {
     fprintf(stderr, "ERROR %ld WRONG POLY\n", line_number);
 }
 
@@ -77,7 +77,7 @@ static void PrintWrongPolyError(long line_number){
  * Wypisuje komunikat o błędnym poleceniu na standardowe wyjście diagnostyczne.
  * @param[in] line_number : numer linii, w której wystąpił błąd
  */
-static void PrintWrongCommandError(long line_number){
+static void PrintWrongCommandError(long line_number) {
     fprintf(stderr, "ERROR %ld WRONG COMMAND\n", line_number);
 }
 
@@ -86,7 +86,7 @@ static void PrintWrongCommandError(long line_number){
  * lub jego braku przy poleceniu @ref DegBy.
  * @param[in] line_number : numer linii, w której wystąpił błąd
  */
-static void PrintDegByWrongVariableError(long line_number){
+static void PrintDegByWrongVariableError(long line_number) {
     fprintf(stderr, "ERROR %ld DEG BY WRONG VARIABLE\n", line_number);
 }
 
@@ -95,7 +95,7 @@ static void PrintDegByWrongVariableError(long line_number){
  * lub jego braku przy poleceniu @ref At.
  * @param[in] line_number : numer linii, w której wystąpił błąd
  */
-static void PrintWrongAtValue(long line_number){
+static void PrintWrongAtValue(long line_number) {
     fprintf(stderr, "ERROR %ld AT WRONG VALUE\n", line_number);
 }
 
@@ -104,7 +104,7 @@ static void PrintWrongAtValue(long line_number){
  * liczbie wielomianów, aby wykonać operację.
  * @param[in] line_number : numer linii, w której wystąpił błąd
  */
-static void PrintStackUnderflowError(long line_number){
+static void PrintStackUnderflowError(long line_number) {
     fprintf(stderr, "ERROR %ld STACK UNDERFLOW\n", line_number);
 }
 
@@ -257,7 +257,7 @@ static poly_exp_t StringToPolyExp(char *s, char **endptr) {
         return 0;
     }
     unsigned long exp = strtoul(s, endptr, BASE_10);
-    if (exp > MAX_EXP){
+    if (exp > MAX_EXP) {
         *endptr = NULL;
         return -1;
     }
@@ -398,13 +398,6 @@ static bool ParsePoly(Poly *p, char *line, size_t line_length, char **endptr) {
         p->arr[p->size++] = m;
         index = *endptr - line;
         plus = true;
-        if ((*endptr)[0] == '+' || (*endptr)[0] == ',' || (*endptr)[0] == '\0') {
-            continue;
-        }
-        else {
-            PolyDestroy(p);
-            return false;
-        }
     }
     *endptr = (line + index);
     if (line[index] != ',' && line[index] != '\0') {
@@ -419,23 +412,49 @@ static bool ParsePoly(Poly *p, char *line, size_t line_length, char **endptr) {
     }
 }
 /**
- * Sprawdza, czy wielomian zawiera tylko dozwolone znaki oraz czy rozpoczyna się
- * prawidłowym znakiem.
+ * Przeprowadza wstępne sprawdzenie poprawności wielomianu.
+ * Sprawdzane warunki:
+ * - wielomian zawiera tylko dozwolone znaki
+ * - rozpoczyna się prawidłowym znakiem
+ * - wszystkie nawiasy są "domknięte"
+ * - po zamykającym nawiasie występuje tylko koniec linii, przecinek lub plus
  * @param[in] line : ciąg znaków
  * @param[in] line_length : długość ciągu znaków
- * @return Czy zapis wielomianu jest poprawny?
+ * @return @p false, jeśli zapis wielomianu jest niepoprawny
  */
 bool CheckCharacters(const char *line, size_t line_length) {
     if (line[0] != '(' && line[0] != '-' && !isdigit(line[0]))
         return false;
 
+    /* Nie może wystąpić sam minus */
+    if (line[0] == '-' && !isdigit(line[1]))
+        return false;
+
+    /* Wielomian stały powinien zawierać tylko i wyłącznie liczby*/
+    if (isdigit(line[0]) || line[0] == '-') {
+        for (size_t i = 1; i < line_length; i++) {
+            if (!isdigit(line[i]))
+                return false;
+        }
+        return true;
+    }
+
+    size_t brackets_counter = 0;
     size_t index = 0;
     while (index < line_length) {
-        if (!strchr(ValidPolyCharacters, line[index]))
+        if (line[index] == '(') {
+            brackets_counter++;
+        }
+        else if (line[index] == ')') {
+            if (line[index + 1] != '+' && line[index + 1] != '\0' && line[index + 1] != ',')
+                return false;
+            brackets_counter--;
+        }
+        else if (!strchr(ValidPolyCharacters, line[index]))
             return false;
         index++;
     }
-    return true;
+    return true && brackets_counter == 0;
 }
 
 /**
@@ -473,7 +492,7 @@ void ParseInputPoly(Stack *s, char *line, size_t line_length, long line_number) 
  * @param[in] read_length : liczba znaków zwrócona przez getline
  * @param[in] line_number : numer linii
  */
-void ParseLine(Stack *s, char *line, long read_length, long line_number){
+void ParseLine(Stack *s, char *line, long read_length, long line_number) {
     if (read_length > 0 && (line[0] == '#' || line[0] == '\n'))
         return;
 

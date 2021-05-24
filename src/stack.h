@@ -11,6 +11,7 @@
  * Stos zaimplementowany na tablicy;
  */
 typedef struct {
+    /** Tablica, w której trzymane są wielomiany */
     Poly *arr;
     /** Liczba elementów na stosie. */
     size_t size;
