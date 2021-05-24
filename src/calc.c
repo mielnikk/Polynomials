@@ -1,3 +1,8 @@
+/** @file
+ * Implementacja kalkulatora wielomianów.
+ *
+ * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -11,15 +16,22 @@
 #include "stack.h"
 #include "poly.h"
 
+#define ONE_ARG_OP_NUMBER 12
 
+/**
+ * Struktura przechowująca operację na stosie, która nie przyjmuje dodatkowych
+ * argumentów, oraz odpowiadjącą jej nazwę polecenia.
+ */
 typedef struct {
     char *name;
-
     bool (*function)(Stack *);
 } Operation;
 
-
-Operation operations[12] = {
+/**
+ * Tablica operacji na stosie wraz z nazwami ich poleceń. Znajdują się tu
+ * operacje, których działanie zależy wyłącznie od stosu.
+ */
+const Operation operations[ONE_ARG_OP_NUMBER] = {
         {.function = Zero, .name = "ZERO"},
         {.function = IsCoeff, .name = "IS_COEFF"},
         {.function = IsZero, .name = "IS_ZERO"},
@@ -34,26 +46,34 @@ Operation operations[12] = {
         {.function = StackPop, .name = "POP"}
 };
 
-char *GetArg(char **line, size_t line_size) {
+/**
+ * Zwraca wskaźnik na pierwszy znak argumentu operacji. Nadpisuje pierwsszą
+ * spację, która oddziela polecenie od argumentu, znakiem zerowym.
+ * @param[in,out] line : linia, czyli ciąg znaków
+ * @param[in] line_size : rozmiar linii
+ * @return wskaźnik na pierwszy znak argumentu operacji
+ */
+static char *GetArg(char *line, size_t line_size) {
     size_t i = 0;
-    while ((*line)[i] != '\n' && i != line_size) {
-        if ((*line)[i] == ' ') {
-            (*line)[i] = '\0';
-            return (*line + i + 1);
+    while (line[i] != '\n' && i != line_size) {
+        if (line[i] == ' ') {
+            line[i] = '\0';
+            return (line + i + 1);
         }
         i++;
     }
     return NULL;
 }
 
-void RemoveNewline(char *line, size_t line_size) {
-    size_t i = 0;
-    while (line[i] != '\0' && i != line_size) {
-        if (line[i] == '\n') {
-            line[i] = '\0';
-            return;
-        }
-        i++;
+/**
+ * Nadpisuje znak nowej linii białym znakiem.
+ * @param line
+ * @param line_size
+ */
+void RemoveNewline(char *line, size_t *line_size) {
+    if(*line_size > 0 && line[*line_size - 1] == '\n'){
+        line[*line_size - 1] = '\0';
+        *line_size = *line_size - 1;
     }
 }
 
@@ -104,9 +124,9 @@ void ParseAt(Stack *s, char *arg, long line_number) {
         fprintf(stderr, "ERROR %ld STACK UNDERFLOW\n", line_number);
 }
 
-void ParseCommand(Stack *s, char *line, long line_size, long line_number) {
-    char *arg = GetArg(&line, line_size);
-    RemoveNewline(line, line_size);
+void ParseCommand(Stack *s, char *line, size_t line_size, long line_number) {
+    char *arg = GetArg(line, line_size);
+    RemoveNewline(line, &line_size);
     if (strcmp("DEG_BY", line) == 0) {
         TryDegBy(s, arg, line_number);
         return;
@@ -115,8 +135,8 @@ void ParseCommand(Stack *s, char *line, long line_size, long line_number) {
         ParseAt(s, arg, line_number);
         return;
     }
-    for (int i = 0; i < 12; i++) {
-        if (strcmp(operations[i].name, line) == 0) {
+    for (int i = 0; i < ONE_ARG_OP_NUMBER; i++) {
+        if (strcmp(operations[i].name, line) == 0 && strlen(operations[i].name) == line_size) {
             if (arg != NULL)
                 break;
             bool op = operations[i].function(s);
@@ -130,12 +150,18 @@ void ParseCommand(Stack *s, char *line, long line_size, long line_number) {
 
 /**
  * Przetwarza początkowe znaki ciągu na wykładnik jednomianu.
+ * Jeśli w @p s nie ma żadnych cyfr do przetworzenia, @p endptr zostaje ustawiony
+ * na @p NULL.
  * @param[in] s : ciąg znaków
  * @param[in,out] endptr : wskaźnik na pierwszy znak, którego nie udało się przetworzyć
  * @param[in] s_length : długość ciągu znaków
  * @return wykładnik jednomianu
  */
 static poly_exp_t StringToPolyExp(char *s, char **endptr, long s_length) {
+    if (!isdigit(s[0])){
+        *endptr = NULL;
+        return 0;
+    }
     *endptr = s;
     long index = 0;
     poly_exp_t exp = 0;
@@ -154,6 +180,11 @@ static poly_exp_t StringToPolyExp(char *s, char **endptr, long s_length) {
     return exp;
 }
 
+/**
+ * Szacuje liczbę jednomianów wielomianu na podstawie liczby zamkniętych nawiasów.
+ * @param[in] line : wiersz zawierający zapis wielomianu
+ * @return oszacowana liczba jednomianów wielomianu
+ */
 size_t CountMonos(const char *line) {
     size_t monos_counter = 1;
     long unclosed_brackets = 0;
@@ -163,10 +194,8 @@ size_t CountMonos(const char *line) {
             unclosed_brackets++;
         else if (line[index] == ')')
             unclosed_brackets--;
-//        else if (line[index] == '+') {
         if (unclosed_brackets == 0)
             monos_counter++;
-//        }
         index++;
     }
     return monos_counter;
@@ -178,23 +207,27 @@ static bool ParseMono(Mono *n, char *line, long line_length, char **endptr) {
     if (line[0] != '(')
         return false;
 
-    char *comma;
+    char *poly_end;
     Poly coeff;
-    bool op = ParsePoly(&coeff, (line + 1), line_length - 1, &comma);
-    if (!op)
+    bool op = ParsePoly(&coeff, (line + 1), line_length - 1, &poly_end);
+    /* Błąd w wielomianie lub brak wielomianu */
+    if (!op || line[1] == poly_end[0])
         return false;
-    if (comma[0] != ',') {
+    /* Błędny znak na końcu wielomianu */
+    if (poly_end[0] != ',') {
         PolyDestroy(&coeff);
         return false;
     }
 
-    poly_exp_t exp = StringToPolyExp((comma + 1), endptr, line_length - (comma - line + 1));
-    if (*endptr[0] != ')') {
+    poly_exp_t exp = StringToPolyExp((poly_end + 1), endptr, line_length - (poly_end - line + 1));
+    /* Brak wykładnika lub brak zakończenia jednomianu */
+    if (*endptr == NULL || *endptr[0] != ')') {
         PolyDestroy(&coeff);
         return false;
     }
     else {
         (*endptr)++;
+        /* Ponieważ operacje na wielomianach wykluczają istnienie 0 * x^n, gdzie n != 0 */
         if (PolyIsZero(&coeff))
             *n = MonoFromPoly(&coeff, 0);
         else
@@ -203,8 +236,15 @@ static bool ParseMono(Mono *n, char *line, long line_length, char **endptr) {
     }
 }
 
+/**
+ * Przetwarza początkowe znaki ciągu na współczynnik.
+ * @param[in,out] p
+ * @param[in] line
+ * @param[in,out] endptr
+ * @return
+ */
 bool ParseCoeff(Poly *p, char *line, char **endptr) {
-    poly_coeff_t poly_coeff = strtol(line, endptr, 0);
+    poly_coeff_t poly_coeff = strtol(line, endptr, 10);
     if (errno == ERANGE) {
         errno = 0;
         return false;
@@ -220,6 +260,7 @@ static bool ParsePoly(Poly *p, char *line, long line_length, char **endptr) {
     p->arr = NULL;
     p->size = 0;
     p->coeff = 0;
+    /* Jeśli zaczyna się od liczby, musi być współczynnikiem. */
     if (line_length > 0 && (isdigit(line[0]) || line[0] == '-'))
         return ParseCoeff(p, line, endptr);
 
@@ -268,8 +309,15 @@ static bool ParsePoly(Poly *p, char *line, long line_length, char **endptr) {
         return true;
     }
 }
+/**
+ * Wstępnie sprawdza warunki poprawności zapisu wielomianu.
+ * @param[in] line : ciąg znaków
+ * @return Czy zapis wielomianu jest poprawny?
+ */
+bool CheckInitialValidity(const char *line) {
+    if(line[0] != '(' && line[0] != '-' && !isdigit(line[0]))
+        return false;
 
-bool CheckCharacters(const char *line) {
     size_t index = 0;
     size_t bracket_counter = 0;
     while (line[index] != '\n' && line[index] != '\0') {
@@ -281,6 +329,9 @@ bool CheckCharacters(const char *line) {
                 return false;
             bracket_counter--;
         }
+        else if(line[index] != '+' && line[index] != '-' && line[index] != ','
+        && !isdigit(line[index]))
+            return false;
         index++;
     }
     return bracket_counter == 0;
@@ -289,7 +340,7 @@ bool CheckCharacters(const char *line) {
 void ParseInputPoly(Stack *s, char *line, long line_length, long line_number) {
     char *endptr;
     Poly poly;
-    if (!CheckCharacters(line)) {
+    if (!CheckInitialValidity(line)) {
         fprintf(stderr, "ERROR %ld WRONG POLY\n", line_number);
         return;
     }
