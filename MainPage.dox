@@ -7,6 +7,8 @@ Uwaga: aktualna treść zadania znajduje się w [Moodle](https://moodle.mimuw.ed
 
 ### Opis programu
 
-Implementacja kalkulatora operującego na wielomianach rzadkich wielu zmiennych.
+Kalkulator działający na wielomianach i stosujący odwrotną notację polską.
+Umożliwia przechowywanie wielomianów oraz wykonywanie na nich operacji.
+Obsługuje wielomiany zapisane w odpowiednim formacie - jako stałą, jednomian lub sumę jednomianów.
 
 */
