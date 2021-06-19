@@ -252,6 +252,13 @@ bool PolyIsEq(const Poly *p, const Poly *q);
  */
 Poly PolyAt(const Poly *p, poly_coeff_t x);
 
+/**
+ * Składa wielomiany z tablicy @p q do wielomianu @p p.
+ * @param p : wielomian @f$p@f$
+ * @param k : liczba wielomianów w tablicy @p q
+ * @param q : tablica wielomianów @f$q_0, q_1, q_2, ..., q_{k-1}@f$
+ * @return  $f$p(q_0, q_1,...q_{k-1})@f$
+ */
 Poly PolyCompose(const Poly *p, size_t k, const Poly q[]);
 
 #endif /* __POLY_H__ */
