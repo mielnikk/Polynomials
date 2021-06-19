@@ -132,4 +132,13 @@ bool StackPop(Stack *s);
  */
 bool Print(Stack *s);
 
+/**
+ * Zdejmuje z wierzchołka stosu pierwszy wielomian, a następnie kolejno @p k
+ * wielomianów, które podstawia na miejsce kolejnych zmiennych w pierwszym wielomianie.
+ * @param s : stos
+ * @param k : liczba wielomianów
+ * @return : złożenie wielomianu z wierzhołka oraz @p k następnych wielomianów
+ */
+bool Compose(Stack *s, size_t k);
+
 #endif //POLYNOMIALS_CALC_OP_H

@@ -4,6 +4,8 @@
  * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
  */
 #include <stdio.h>
+#include <malloc.h>
+#include <stdlib.h>
 #include "calc_op.h"
 #include "poly.h"
 
@@ -15,7 +17,7 @@ bool Zero(Stack *s) {
 }
 
 bool IsCoeff(Stack *s) {
-    if(IsEmpty(s))
+    if (IsEmpty(s))
         return false;
     Poly p = Top(s);
     if (PolyIsCoeff(&p))
@@ -25,7 +27,7 @@ bool IsCoeff(Stack *s) {
 }
 
 bool IsZero(Stack *s) {
-    if(IsEmpty(s))
+    if (IsEmpty(s))
         return false;
     Poly p = Top(s);
     if (PolyIsZero(&p))
@@ -35,7 +37,7 @@ bool IsZero(Stack *s) {
 }
 
 bool Clone(Stack *s) {
-    if(IsEmpty(s))
+    if (IsEmpty(s))
         return false;
     Poly p = Top(s);
     Poly p_clone = PolyClone(&p);
@@ -44,7 +46,7 @@ bool Clone(Stack *s) {
 }
 
 bool Neg(Stack *s) {
-    if(IsEmpty(s))
+    if (IsEmpty(s))
         return false;
     Poly p = Pop(s);
     Poly p_neg = PolyNeg(&p);
@@ -89,7 +91,7 @@ bool Mul(Stack *s) {
 }
 
 bool IsEq(Stack *s) {
-    if(s->size < 2)
+    if (s->size < 2)
         return false;
     Poly fst = Top(s);
     Poly snd = SecondTop(s);
@@ -110,7 +112,7 @@ bool Deg(Stack *s) {
 }
 
 bool DegBy(Stack *s, size_t idx) {
-    if(IsEmpty(s))
+    if (IsEmpty(s))
         return false;
     Poly p = Top(s);
     poly_exp_t deg = PolyDegBy(&p, idx);
@@ -119,7 +121,7 @@ bool DegBy(Stack *s, size_t idx) {
 }
 
 bool StackPop(Stack *s) {
-    if(IsEmpty(s))
+    if (IsEmpty(s))
         return false;
     Poly p = Pop(s);
     PolyDestroy(&p);
@@ -170,5 +172,28 @@ bool Print(Stack *s) {
     Poly p = Top(s);
     PrintPoly(p);
     printf("\n");
+    return true;
+}
+
+bool Compose(Stack *s, size_t k) {
+    if (s->size < k + 1)
+        return false;
+
+    Poly *tab = malloc(k * sizeof(Poly));
+    if (tab == NULL)
+        exit(1);
+
+    Poly p = Pop(s);
+    for (size_t i = 1; i <= k; i++) {
+        tab[k - i] = Pop(s);
+    }
+
+    Poly res = PolyCompose(&p, k, tab);
+    Push(s, &res);
+    PolyDestroy(&p);
+    for (size_t i = 0; i < k; i++) {
+        PolyDestroy(&tab[i]);
+    }
+    free(tab);
     return true;
 }

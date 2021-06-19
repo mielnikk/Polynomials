@@ -502,7 +502,12 @@ Poly PolyAt(const Poly *p, poly_coeff_t x) {
     return result;
 }
 
-static Poly PolyPower(Poly *p, size_t pow) {
+static Poly PolyPower(const Poly *p, size_t pow) {
+    if (pow == 0)
+        return PolyFromCoeff(1);
+    else if (pow == 1)
+        return PolyClone(p);
+
     Poly result = *p;
     for (size_t i = 0; i < pow - 1; i++) {
         Poly pow_res = PolyMul(&result, p);
@@ -513,25 +518,31 @@ static Poly PolyPower(Poly *p, size_t pow) {
 }
 
 Poly ComposeHelper(const Poly *p, size_t poly_index, const size_t size, const Poly q[]) {
-    if (PolyIsCoeff(p) || poly_index == size)
-        return PolyClone(p);
-
-    Poly res;
-    if (PolyIsCoeff(&q[poly_index])) {
-        res = PolyAt(p, q[poly_index].coeff);
-        return ComposeHelper(&res, ++poly_index, size, q);
+    if (poly_index >= size) {
+        for (size_t i = 0; i < p->size; i++) {
+            if (p->arr[i].exp == 0)
+                return ComposeHelper(&p->arr[i].p, ++poly_index, size, q);
+        }
+        return PolyZero();
     }
 
-    Poly acc = PolyZero();
+    if (PolyIsCoeff(p))
+        return PolyClone(p);
+
+    Poly res, acc = PolyZero();
     poly_index++;
     for (size_t i = 0; i < p->size; i++) {
         res = ComposeHelper(&p->arr[i].p, poly_index, size, q);
-        Poly pow_res = PolyPower(&res, p->arr[i].exp);
-        PolyDestroy(&res);
-        Poly add_res = PolyAdd(&acc, &pow_res);
+        Poly pow_res = PolyPower(&q[poly_index], p->arr[i].exp);
+        Poly mul_res = PolyMul(&res, &pow_res);
         PolyDestroy(&pow_res);
-        PolyDestroy(&acc);
+        PolyDestroy(&res);
+        Poly add_res = PolyAdd(&acc, &mul_res);
+        PolyDestroy(&mul_res);
+        Poly old_acc = acc;
         acc = add_res;
+        PolyDestroy(&add_res);
+        PolyDestroy(&old_acc);
     }
     if (PolyIsNestedCoeff(&acc))
         return PolyToCoeff(&acc);

@@ -38,6 +38,11 @@ const Operation operations[ONE_ARG_OP_NUMBER] = {
 };
 
 /**
+ * Nazwa polecenia odpowiadającego operacji @ref Compose.
+ */
+const char *ComposeCommandName = "COMPOSE";
+
+/**
  * Nazwa polecenia odpowiadającego operacji @ref DegBy.
  */
 const char *DegByCommandName = "DEG_BY";
@@ -67,6 +72,15 @@ static void PrintDegByWrongVariableError(long line_number) {
  */
 static void PrintWrongAtValue(long line_number) {
     fprintf(stderr, "ERROR %ld AT WRONG VALUE\n", line_number);
+}
+
+/**
+ * Wypisuje na standardowe wyjście diagnostyczne komunikat o błędnym parametrze
+ * lub jego braku przy poleceniu @ref At.
+ * @param[in] line_number : numer linii, w której wystąpił błąd
+ */
+static void PrintComposeParameterError(long line_number) {
+    fprintf(stderr, "ERROR %ld COMPOSE WRONG PARAMETER\n", line_number);
 }
 
 /**
@@ -163,6 +177,29 @@ static void ParseDegBy(Stack *s, char *arg, long line_number) {
         PrintStackUnderflowError(line_number);
 }
 
+static void ParseCompose(Stack *s, char *arg, long line_number){
+    if (arg == NULL || !isdigit(arg[0])) {
+        PrintComposeParameterError(line_number);
+        return;
+    }
+    char *endptr;
+    unsigned long long value = strtoull(arg, &endptr, BASE_10);
+    /* Niepoprawny zakres */
+    if (errno == ERANGE) {
+        PrintComposeParameterError(line_number);
+        errno = 0;
+        return;
+    }
+    /* Argument nie był liczbą */
+    if (endptr[0] != '\0') {
+        PrintComposeParameterError(line_number);
+        return;
+    }
+    bool op = Compose(s, value);
+    if (!op)
+        PrintStackUnderflowError(line_number);
+
+}
 void ParseCommand(Stack *s, char *line, size_t line_size, long line_number) {
     /* "Odseparowanie" nazwy i argumentu */
     char *arg = GetArg(line, line_size);
@@ -173,6 +210,10 @@ void ParseCommand(Stack *s, char *line, size_t line_size, long line_number) {
     }
     else if (strcmp(AtCommandName, line) == 0) {
         ParseAt(s, arg, line_number);
+        return;
+    }
+    else if (strcmp(ComposeCommandName, line) == 0){
+        ParseCompose(s, arg, line_number);
         return;
     }
     for (int i = 0; i < ONE_ARG_OP_NUMBER; i++) {
