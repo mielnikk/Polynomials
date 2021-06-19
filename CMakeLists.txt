@@ -21,10 +21,13 @@ set(CMAKE_C_FLAGS "-std=c11 -Wall -Wextra")
 
 # Wskazujemy pliki źródłowe.
 set(SOURCE_FILES
-        src/calc.c
         src/poly.c src/poly.h
+        src/calc.c
         src/stack.c src/stack.h
-        src/calc_op.c src/calc_op.h)
+        src/calc_op.c src/calc_op.h
+        src/command_parser.c src/command_parser.h
+        src/poly_parser.c src/poly_parser.h
+        )
 
 # Wskazujemy plik wykonywalny.
 add_executable(poly ${SOURCE_FILES})
@@ -37,8 +40,8 @@ if (DOXYGEN_FOUND)
     # Dodajemy cel doc: użycie make doc spowoduje wywołanie doxygena z odpowiednim plikiem konfiguracyjnym w folderze kompilacji.
     # Na wyjście zostanie wypisany odpowiedni komentarz.
     add_custom_target(doc
-        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-    )
+            ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Generating API documentation with Doxygen"
+            )
 endif (DOXYGEN_FOUND)

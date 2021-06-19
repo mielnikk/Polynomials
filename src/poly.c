@@ -68,7 +68,7 @@ static Poly PolyToCoeff(const Poly *p) {
  * @param array_size : rozmiar tablicy jednomianów
  * @return wielomian stworzony na podstawie tablicy jednomianów
  */
-static Poly PolyFromArray(Mono *monos, size_t array_size){
+static Poly PolyFromArray(Mono *monos, size_t array_size) {
     Poly poly = (Poly) {.arr = monos, .size = array_size};
     if (PolyIsNestedCoeff(&poly)) {
         Poly new_poly = PolyToCoeff(&poly);
@@ -253,10 +253,6 @@ static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size, const boo
                 PolyDestroy(&curr_poly);
             last_mono_owner = true;
         }
-//        /* Lekka optymalizacja liczby alokacji */
-//        else if (array[index].exp == monos[i].exp && !PolyIsZero(&monos[i].p)){
-//            MonoDestroy(&monos[i]);
-//        }
         else {
             /* Jeśli ostatnio dodany jednomian ma zerowy współczynnik, nadpisuje
              * go następnym jednomianem */
@@ -273,7 +269,7 @@ static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size, const boo
     return array;
 }
 
-Poly PolyOwnMonos(size_t count, Mono *monos){
+Poly PolyOwnMonos(size_t count, Mono *monos) {
     if (count == 0)
         return PolyZero();
 
@@ -305,19 +301,19 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
     return PolyOwnMonos(copy_size, monos_copy);
 }
 
-Poly PolyCloneMonos(size_t count, const Mono monos[]){
+Poly PolyCloneMonos(size_t count, const Mono monos[]) {
     if (count == 0 || monos == NULL)
         return PolyZero();
 
     size_t copy_size = 0;
     Mono *copy = CopyMonosArray(count, monos, &copy_size);
-    if (copy_size == 0){
+    if (copy_size == 0) {
         free(copy);
         return PolyZero();
     }
     size_t new_size = 0;
     Mono *new = SimplifyMonos(copy, copy_size, &new_size, false);
-    if(new_size == 0){
+    if (new_size == 0) {
         free(new);
         return PolyZero();
     }
@@ -504,4 +500,44 @@ Poly PolyAt(const Poly *p, poly_coeff_t x) {
         PolyDestroy(&multiplied_poly);
     }
     return result;
+}
+
+static Poly PolyPower(Poly *p, size_t pow) {
+    Poly result = *p;
+    for (size_t i = 0; i < pow - 1; i++) {
+        Poly pow_res = PolyMul(&result, p);
+        PolyDestroy(&result);
+        result = pow_res;
+    }
+    return result;
+}
+
+Poly ComposeHelper(const Poly *p, size_t poly_index, const size_t size, const Poly q[]) {
+    if (PolyIsCoeff(p) || poly_index == size)
+        return PolyClone(p);
+
+    Poly res;
+    if (PolyIsCoeff(&q[poly_index])) {
+        res = PolyAt(p, q[poly_index].coeff);
+        return ComposeHelper(&res, ++poly_index, size, q);
+    }
+
+    Poly acc = PolyZero();
+    poly_index++;
+    for (size_t i = 0; i < p->size; i++) {
+        res = ComposeHelper(&p->arr[i].p, poly_index, size, q);
+        Poly pow_res = PolyPower(&res, p->arr[i].exp);
+        PolyDestroy(&res);
+        Poly add_res = PolyAdd(&acc, &pow_res);
+        PolyDestroy(&pow_res);
+        PolyDestroy(&acc);
+        acc = add_res;
+    }
+    if (PolyIsNestedCoeff(&acc))
+        return PolyToCoeff(&acc);
+    return acc;
+}
+
+Poly PolyCompose(const Poly *p, size_t k, const Poly q[]) {
+    return ComposeHelper(p, 0, k, q);
 }
