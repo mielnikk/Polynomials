@@ -176,10 +176,14 @@ bool Print(Stack *s) {
 }
 
 bool Compose(Stack *s, size_t k) {
-    if (s->size < k + 1)
+    if (s->size <= k)
         return false;
+    Poly *tab;
+    if(k == 0)
+        tab = malloc(sizeof(Poly));
+    else
+        tab = malloc(k * sizeof(Poly));
 
-    Poly *tab = malloc(k * sizeof(Poly));
     if (tab == NULL)
         exit(1);
 
