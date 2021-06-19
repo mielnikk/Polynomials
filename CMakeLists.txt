@@ -27,7 +27,7 @@ set(SOURCE_FILES
         src/calc_op.c src/calc_op.h)
 
 # Wskazujemy plik wykonywalny.
-add_executable(calc ${SOURCE_FILES})
+add_executable(poly ${SOURCE_FILES})
 
 # Dodajemy obsługę Doxygena: sprawdzamy, czy jest zainstalowany i jeśli tak to:
 find_package(Doxygen)
