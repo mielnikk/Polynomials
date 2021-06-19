@@ -376,6 +376,8 @@ static bool ParsePoly(Poly *p, char *line, size_t line_length, char **endptr) {
     bool plus = false;
     size_t index = 0;
     size_t monos_size = CountMonos(line);
+    if (monos_size ==  0)
+        return false;
     p->arr = SafeMonoMalloc(monos_size);
     while (index < line_length && line[index] != '\0' && line[index] != ',') {
         /* Jeśli obecnym znakiem powinien być + */
