@@ -80,13 +80,6 @@ Poly PolyClone(const Poly *p) {
     return (Poly) {.arr = new_mono_array, .size = p->size};
 }
 
-Poly PolyCloneMonos(size_t count, const Mono monos[]){
-    if (count == 0 || monos == NULL)
-        return PolyZero();
-
-
-}
-
 /**
  * Komparator wykładników jednomianów.
  */
@@ -217,15 +210,18 @@ static Mono *CopyMonosArray(size_t count, const Mono *monos, size_t *copy_size) 
 
 /**
  * Upraszcza tablicę @p monos tak, aby wykładniki jednomianów były parami różne.
- * Przejmuje zawartość @p monos na własność.
+ * Przejmuje zawartość @p monos na własność. Zmienna @p monos_owner powinna być
+ * ustawiona na @p true, jeśli funkcja przejumje na własność wielomiany z tablicy
+ * @p monos lub na @p false w przeciwnym przypadku.
  * @param[in,out] monos : tablica jednomianów
  * @param[in] size : rozmiar tablicy @p monos
  * @param[in,out] new_size : rozmiar tablicy wynikowej
  * @return tablica jednomianów posortowana rosnąco po wykładnikach
  */
-static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size) {
+static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size, const bool monos_owner) {
     assert(size != 0);
     size_t index = 0;
+    bool last_mono_owner = monos_owner;
     Mono *array = SafeMonoMalloc(size);
     qsort(monos, size, sizeof(Mono), MonoExpCmp);
     array[index] = monos[0];
@@ -233,19 +229,23 @@ static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size) {
         if (array[index].exp == monos[i].exp && !PolyIsZero(&monos[i].p)) {
             Poly curr_poly = array[index].p;
             array[index].p = PolyAdd(&curr_poly, &monos[i].p);
-            MonoDestroy(&monos[i]);
-            PolyDestroy(&curr_poly);
+            if (monos_owner)
+                MonoDestroy(&monos[i]);
+            if (last_mono_owner)
+                PolyDestroy(&curr_poly);
+            last_mono_owner = true;
         }
-        /* Lekka optymalizacja liczby alokacji */
-        else if (array[index].exp == monos[i].exp && !PolyIsZero(&monos[i].p)){
-            MonoDestroy(&monos[i]);
-        }
+//        /* Lekka optymalizacja liczby alokacji */
+//        else if (array[index].exp == monos[i].exp && !PolyIsZero(&monos[i].p)){
+//            MonoDestroy(&monos[i]);
+//        }
         else {
             /* Jeśli ostatnio dodany jednomian ma zerowy współczynnik, nadpisuje
              * go następnym jednomianem */
             if (!PolyIsZero(&array[index].p))
                 index++;
             array[index] = monos[i];
+            last_mono_owner = monos_owner;
         }
     }
     /* Sprawdza, czy ostatni jednomian ma zerowy współczynnik */
@@ -291,6 +291,32 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
     }
 
     return PolyOwnMonos(copy_size, monos_copy);
+}
+
+Poly PolyCloneMonos(size_t count, const Mono monos[]){
+    if (count == 0 || monos == NULL)
+        return PolyZero();
+
+    size_t copy_size = 0;
+    Mono *copy = CopyMonosArray(count, monos, &copy_size);
+    if (copy_size == 0){
+        free(copy);
+        return PolyZero();
+    }
+    size_t new_size = 0;
+    Mono *new = SimplifyMonos(copy, copy_size, &new_size, false);
+    if(new_size == 0){
+        free(new);
+        return PolyZero();
+    }
+
+    Poly poly = (Poly) {.arr = new, .size = new_size};
+    if (PolyIsNestedCoeff(&poly)) {
+        Poly new_poly = PolyToCoeff(&poly);
+        PolyDestroy(&poly);
+        return new_poly;
+    }
+    return poly;
 }
 
 poly_exp_t PolyDegBy(const Poly *p, size_t var_idx) {
