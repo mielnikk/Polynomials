@@ -60,6 +60,24 @@ static Poly PolyToCoeff(const Poly *p) {
         return PolyToCoeff(&p->arr[0].p);
 }
 
+/**
+ * Tworzy wielomian na podstawie tablicy wielomianów. Jeśli wielomian jest
+ * zagłębionym jednomianem, upraszcza go. Przejmuje na własność tablicę
+ * @p monos i jej zawartość.
+ * @param[in] monos : tablica jednomianów
+ * @param array_size : rozmiar tablicy jednomianów
+ * @return wielomian stworzony na podstawie tablicy jednomianów
+ */
+static Poly PolyFromArray(Mono *monos, size_t array_size){
+    Poly poly = (Poly) {.arr = monos, .size = array_size};
+    if (PolyIsNestedCoeff(&poly)) {
+        Poly new_poly = PolyToCoeff(&poly);
+        PolyDestroy(&poly);
+        return new_poly;
+    }
+    return poly;
+}
+
 void PolyDestroy(Poly *p) {
     if (!PolyIsCoeff(p)) {
         for (size_t i = 0; i < p->size; i++) {
@@ -261,7 +279,7 @@ Poly PolyOwnMonos(size_t count, Mono *monos){
 
     Mono *new;
     size_t new_size = 0;
-    new = SimplifyMonos(monos, count, &new_size);
+    new = SimplifyMonos(monos, count, &new_size, true);
     free(monos);
     /* Gdy wszystko uprościło się do zera */
     if (new_size == 0) {
@@ -269,13 +287,7 @@ Poly PolyOwnMonos(size_t count, Mono *monos){
         return PolyZero();
     }
 
-    Poly poly = (Poly) {.arr = new, .size = new_size};
-    if (PolyIsNestedCoeff(&poly)) {
-        Poly new_poly = PolyToCoeff(&poly);
-        PolyDestroy(&poly);
-        return new_poly;
-    }
-    return poly;
+    return PolyFromArray(new, new_size);
 }
 
 Poly PolyAddMonos(size_t count, const Mono monos[]) {
@@ -310,13 +322,7 @@ Poly PolyCloneMonos(size_t count, const Mono monos[]){
         return PolyZero();
     }
 
-    Poly poly = (Poly) {.arr = new, .size = new_size};
-    if (PolyIsNestedCoeff(&poly)) {
-        Poly new_poly = PolyToCoeff(&poly);
-        PolyDestroy(&poly);
-        return new_poly;
-    }
-    return poly;
+    return PolyFromArray(new, new_size);
 }
 
 poly_exp_t PolyDegBy(const Poly *p, size_t var_idx) {
