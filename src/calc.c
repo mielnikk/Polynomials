@@ -66,7 +66,7 @@ void ParseLine(Stack *s, char *line, long read_length, long line_number) {
 /**
  * Wczytuje dane ze standardowego wejścia oraz je przetwarza.
  * @return @p 0 w przypadku poprawnego zakończenia programu, @p 1 w przypadku
- * błędu
+ * błędu.
  */
 int main() {
     Stack stack = GetNewStack();
