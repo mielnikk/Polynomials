@@ -80,6 +80,13 @@ Poly PolyClone(const Poly *p) {
     return (Poly) {.arr = new_mono_array, .size = p->size};
 }
 
+Poly PolyCloneMonos(size_t count, const Mono monos[]){
+    if (count == 0 || monos == NULL)
+        return PolyZero();
+
+
+}
+
 /**
  * Komparator wykładników jednomianów.
  */
@@ -223,11 +230,15 @@ static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size) {
     qsort(monos, size, sizeof(Mono), MonoExpCmp);
     array[index] = monos[0];
     for (size_t i = 1; i < size; i++) {
-        if (array[index].exp == monos[i].exp) {
+        if (array[index].exp == monos[i].exp && !PolyIsZero(&monos[i].p)) {
             Poly curr_poly = array[index].p;
             array[index].p = PolyAdd(&curr_poly, &monos[i].p);
             MonoDestroy(&monos[i]);
             PolyDestroy(&curr_poly);
+        }
+        /* Lekka optymalizacja liczby alokacji */
+        else if (array[index].exp == monos[i].exp && !PolyIsZero(&monos[i].p)){
+            MonoDestroy(&monos[i]);
         }
         else {
             /* Jeśli ostatnio dodany jednomian ma zerowy współczynnik, nadpisuje
@@ -244,20 +255,14 @@ static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size) {
     return array;
 }
 
-Poly PolyAddMonos(size_t count, const Mono monos[]) {
+Poly PolyOwnMonos(size_t count, Mono *monos){
     if (count == 0)
         return PolyZero();
 
-    size_t new_size = 0, copy_size = 0;
-    Mono *new, *monos_copy = CopyMonosArray(count, monos, &copy_size);
-    /* Gdy w monos[] wszystko było zerami */
-    if (copy_size == 0) {
-        free(monos_copy);
-        return PolyZero();
-    }
-
-    new = SimplifyMonos(monos_copy, copy_size, &new_size);
-    free(monos_copy);
+    Mono *new;
+    size_t new_size = 0;
+    new = SimplifyMonos(monos, count, &new_size);
+    free(monos);
     /* Gdy wszystko uprościło się do zera */
     if (new_size == 0) {
         free(new);
@@ -271,6 +276,21 @@ Poly PolyAddMonos(size_t count, const Mono monos[]) {
         return new_poly;
     }
     return poly;
+}
+
+Poly PolyAddMonos(size_t count, const Mono monos[]) {
+    if (count == 0)
+        return PolyZero();
+
+    size_t copy_size = 0;
+    Mono *monos_copy = CopyMonosArray(count, monos, &copy_size);
+    /* Gdy w monos[] wszystko było zerami */
+    if (copy_size == 0) {
+        free(monos_copy);
+        return PolyZero();
+    }
+
+    return PolyOwnMonos(copy_size, monos_copy);
 }
 
 poly_exp_t PolyDegBy(const Poly *p, size_t var_idx) {
