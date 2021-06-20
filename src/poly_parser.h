@@ -1,3 +1,9 @@
+/** @file
+ * Interfejs modułu przetwarzającego zapis wielomianu
+ *
+ * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ */
+
 #ifndef POLYNOMIALS_POLY_PARSER_H
 #define POLYNOMIALS_POLY_PARSER_H
 

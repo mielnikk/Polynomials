@@ -1,3 +1,9 @@
+/** @file
+ * Interfejs modułu przetwarzającego zapis polecenia kalkulatora
+ *
+ * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ */
+
 #ifndef POLYNOMIALS_COMMAND_PARSER_H
 #define POLYNOMIALS_COMMAND_PARSER_H
 

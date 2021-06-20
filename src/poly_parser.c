@@ -1,3 +1,8 @@
+/** @file
+ * Implementacja modułu przetwarzającego zapis wielomianu
+ *
+ * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ */
 #include <ctype.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -9,9 +14,7 @@
 #define BASE_10 10 ///< Wartość reprezentująca system dziesiętny
 
 
-/**
- * Znaki, które mogą wystąpić w zapisie wielomianu.
- */
+/** Znaki, które mogą wystąpić w zapisie wielomianu. */
 const char *ValidPolyCharacters = "0123456789()+-,";
 
 void PrintWrongPolyError(long line_number) {

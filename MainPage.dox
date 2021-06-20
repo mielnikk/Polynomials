@@ -1,14 +1,39 @@
 /**
 @mainpage Dokumentacja zadania wielomiany
 
-### Treść zadania
+@section opis_programu Opis programu
 
-Uwaga: aktualna treść zadania znajduje się w [Moodle](https://moodle.mimuw.edu.pl).
+Kalkulator działający na wielomianach i stosujący odwrotną notację polską. Wprowadzone wielomiany przechowuje na stosie.
+Umożliwia wykonywanie następujących poleceń:
+- @ref Zero "ZERO" – wstawia na wierzchołek stosu wielomian tożsamościowo równy zeru;
+- @ref IsCoeff "IS_COEFF" – sprawdza, czy wielomian na wierzchołku stosu jest współczynnikiem – wypisuje na standardowe wyjście @p 0 lub @p 1;
+- @ref IsZero "IS_ZERO" – sprawdza, czy wielomian na wierzchołku stosu jest tożsamościowo równy zeru – wypisuje na standardowe wyjście @p 0 lub @p 1;
+- @ref Clone "CLONE" – wstawia na stos kopię wielomianu z wierzchołka;
+- @ref Add "ADD" – dodaje dwa wielomiany z wierzchu stosu, usuwa je i wstawia na wierzchołek stosu ich sumę;
+- @ref Mul "MUL" – mnoży dwa wielomiany z wierzchu stosu, usuwa je i wstawia na wierzchołek stosu ich iloczyn;
+- @ref Neg "NEG" – neguje wielomian na wierzchołku stosu;
+- @ref Sub "SUB" – odejmuje od wielomianu z wierzchołka wielomian pod wierzchołkiem, usuwa je i wstawia na wierzchołek stosu różnicę;
+- @ref IsEq "IS_EQ" – sprawdza, czy dwa wielomiany na wierzchu stosu są równe – wypisuje na standardowe wyjście @p 0 lub @p 1;
+- @ref Deg "DEG" – wypisuje na standardowe wyjście stopień wielomianu (@p −1 dla wielomianu tożsamościowo równego zeru);
+- @ref DegBy "DEG_BY" @p idx – wypisuje na standardowe wyjście stopień wielomianu ze względu na zmienną o numerze idx (@p −1 dla wielomianu tożsamościowo równego zeru);
+- @ref At "AT" @p x – wylicza wartość wielomianu w punkcie @p x, usuwa wielomian z wierzchołka i wstawia na stos wynik operacji;
+- @ref Print "PRINT" – wypisuje na standardowe wyjście wielomian z wierzchołka stosu;
+- @ref StackPop "POP" – usuwa wielomian z wierzchołka stosu;
+- @ref Compose "COMPOSE" @p k - zdejmuje z wierzchołka stosu najpierw wielomian @f$p@f$, a potem kolejno wielomiany @f$q_{k - 1}, q_{k - 2}, …, q_0@f$
+i umieszcza na stosie wynik operacji złożenia.
 
-### Opis programu
+@section wielomiany Wielomiany
+@subsection o_wiel O wielomianach rzadkich wielu zmiennych
 
-Kalkulator działający na wielomianach i stosujący odwrotną notację polską.
-Umożliwia przechowywanie wielomianów oraz wykonywanie na nich operacji.
-Obsługuje wielomiany zapisane w odpowiednim formacie - jako stałą, jednomian lub sumę jednomianów.
+Wielomian @ref Poly jest sumą jednomianów @ref Mono postaci @f$px^n_0@f$, gdzie @f$n@f$ jest wykładnikiem tego jednomianu
+będącym nieujemną liczbą całkowitą, a @f$p@f$ jest współczynnikiem, który jest wielomianem.
+Współczynnik w jednomianie zmiennej @f$x_i@f$ jest sumą jednomianów zmiennej @f$x_{i+1}@f$.
+Rekurencja kończy się, gdy współczynnik jest liczbą (czyli wielomianem stałym), a nie sumą kolejnych jednomianów.
+
+@subsection format_wiel Format zapisu wielomianów
+
+Wielomian reprezentujemy jako stałą, jednomian lub sumę jednomianów.
+Stała jest liczbą całkowitą. Jednomian reprezentujemy jako parę (@p coeff,@p exp),
+gdzie współczynnik @p coeff jest wielomianem, a wykładnik @p exp jest liczbą nieujemną.
 
 */

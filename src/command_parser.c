@@ -1,3 +1,9 @@
+/** @file
+ * Implementacja modułu przetwarzającego zapis polecenia kalkulatora
+ *
+ * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ */
+
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
