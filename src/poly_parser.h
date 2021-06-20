@@ -2,6 +2,7 @@
  * Interfejs modułu przetwarzającego zapis wielomianu
  *
  * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ * @date 20.06.2021
  */
 
 #ifndef POLYNOMIALS_POLY_PARSER_H

@@ -2,6 +2,7 @@
  * Implementacja modułu przetwarzającego zapis polecenia kalkulatora
  *
  * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ * @date 20.06.2021
  */
 
 #include <string.h>

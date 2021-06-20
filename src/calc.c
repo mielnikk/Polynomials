@@ -2,6 +2,7 @@
  * Implementacja kalkulatora wielomianów.
  *
  * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ * @date 20.06.2021
  */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE ///< Wymagane do poprawnego działania funkcji getline.

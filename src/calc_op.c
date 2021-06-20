@@ -2,9 +2,9 @@
  * Implementacja operacji, które umożliwia kalkulator.
  *
  * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ * @date 20.06.2021
  */
 #include <stdio.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include "calc_op.h"
 #include "poly.h"

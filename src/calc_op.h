@@ -2,6 +2,7 @@
  * Interfejs modułu z operacjami, których używa kalkulator.
  *
  * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ * @date 20.06.2021
  */
 #ifndef POLYNOMIALS_CALC_OP_H
 #define POLYNOMIALS_CALC_OP_H

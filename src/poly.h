@@ -1,7 +1,8 @@
 /** @file
   Interfejs klasy wielomianów rzadkich wielu zmiennych
 
-  @authors Jakub Pawlewicz <pan@mimuw.edu.pl>, Marcin Peczarski <marpe@mimuw.edu.pl>
+  @authors Jakub Pawlewicz <pan@mimuw.edu.pl>, Marcin Peczarski <marpe@mimuw.edu.pl>,
+  Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
   @copyright Uniwersytet Warszawski
   @date 2021
 */

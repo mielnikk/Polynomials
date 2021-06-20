@@ -2,6 +2,8 @@
  * Implementacja stosu wielomianów na dynamicznie alokowanej tablicy
  *
  * @author Katarzyna Mielnik <km429567@students.mimuw.edu.pl>
+ *
+ * @date 24.05.2021
  */
 #include <stdlib.h>
 #include "stack.h"
