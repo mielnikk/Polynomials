@@ -21,8 +21,8 @@
 void ParseInputPoly(Stack *s, char *line, size_t line_length, long line_number);
 
 /**
- * Wypisuje komunikat o błędzie podczas parsowania wielomianu na standardowe
- * wyjście diagnostyczne.
+ * Wypisuje na standardowe wyjście diagnostyczne komunikat o błędzie podczas
+ * parsowania wielomianu.
  * @param[in] line_number : numer linii, w której wystąpił błąd
  */
 void PrintWrongPolyError(long line_number);

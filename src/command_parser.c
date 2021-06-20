@@ -183,6 +183,15 @@ static void ParseDegBy(Stack *s, char *arg, long line_number) {
         PrintStackUnderflowError(line_number);
 }
 
+/**
+ * Sprawdza poprawność argumentu polecenia @ref Compose oraz wykonuje operację z
+ * poprawnym argumentem. W przypadku błędnego argumentu lub niewystarczającej
+ * liczby argumentów na stosie, wypisuje na standardowe wyjście komunikat o
+ * błędzie.
+ * @param[in,out] s : stos
+ * @param[in] arg : argument operacji w postaci ciągu znaków
+ * @param[in] line_number : numer linii
+ */
 static void ParseCompose(Stack *s, char *arg, long line_number){
     if (arg == NULL || !isdigit(arg[0])) {
         PrintComposeParameterError(line_number);

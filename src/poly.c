@@ -16,6 +16,10 @@
 #include <stdlib.h>
 #include "poly.h"
 
+/** Liczba o 1 mniejsza od indeksu pierwszej zmiennej wielomianu - służy do
+ *  wywołania @ref ComposeHelper */
+#define COMPOSE_STARTING_INDEX -1
+
 /**
  * Zwraca większy z dwóch wykładników.
  * @param[in] a : wykładnik
@@ -234,6 +238,7 @@ static Mono *CopyMonosArray(size_t count, const Mono *monos, size_t *copy_size) 
  * @param[in,out] monos : tablica jednomianów
  * @param[in] size : rozmiar tablicy @p monos
  * @param[in,out] new_size : rozmiar tablicy wynikowej
+ * @param[in] monos_owner : informacja o tym, czy funkcja przejmuje na własność zawartość @p monos
  * @return tablica jednomianów posortowana rosnąco po wykładnikach
  */
 static Mono *SimplifyMonos(Mono *monos, size_t size, size_t *new_size, const bool monos_owner) {
@@ -502,29 +507,42 @@ Poly PolyAt(const Poly *p, poly_coeff_t x) {
     return result;
 }
 
-static Poly QuickPolyPow(const Poly *base, poly_coeff_t exp) {
+/**
+ * Wykonuje szybkie potęgowanie wielomianu do potęgi @p exp.
+ * @param[in] p : wielomian
+ * @param[in] exp : wykładnik potęgi
+ * @return wielomian będący wynikiem potęgowania
+ */
+static Poly QuickPolyPow(const Poly *p, poly_coeff_t exp) {
     if (exp == 0)
         return PolyFromCoeff(1);
     if (exp % 2 == 1){
-        Poly res = QuickPolyPow(base, exp - 1);
-        Poly mul_res = PolyMul(base, &res);
+        Poly res = QuickPolyPow(p, exp - 1);
+        Poly mul_res = PolyMul(p, &res);
         PolyDestroy(&res);
         return mul_res;
     }
 
-    Poly result = QuickPolyPow(base, exp / 2);
+    Poly result = QuickPolyPow(p, exp / 2);
     Poly mul_res = PolyMul(&result, &result);
     PolyDestroy(&result);
     return mul_res;
 }
 
-
-Poly ComposeHelper(const Poly *p, int poly_index, const size_t size, const Poly q[]) {
+/**
+ * Dokonuje rekurencyjnego składania wielomianów.
+ * @param p : wielomian
+ * @param poly_index : indeks wielomianu z tablicy @p q, od którego rozpoczynamy składanie
+ * @param size : rozmiar tablicy @p q
+ * @param q : tablica wielomianów
+ * @return
+ */
+Poly ComposeHelper(const Poly *p, long poly_index, const size_t size, const Poly q[]) {
     if (PolyIsCoeff(p))
         return PolyClone(p);
 
     poly_index++;
-    if (poly_index >= (int) size) {
+    if (poly_index >= (long) size) {
         for (size_t i = 0; i < p->size; i++) {
             if (p->arr[i].exp == 0) {
                 return ComposeHelper(&p->arr[i].p, ++poly_index, size, q);
@@ -552,5 +570,5 @@ Poly ComposeHelper(const Poly *p, int poly_index, const size_t size, const Poly 
 }
 
 Poly PolyCompose(const Poly *p, size_t k, const Poly q[]) {
-    return ComposeHelper(p, -1, k, q);
+    return ComposeHelper(p, COMPOSE_STARTING_INDEX, k, q);
 }

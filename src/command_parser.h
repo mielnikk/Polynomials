@@ -23,7 +23,7 @@
 void ParseCommand(Stack *s, char *line, size_t line_size, long line_number);
 
 /**
- * Wypisuje komunikat o błędnym poleceniu na standardowe wyjście diagnostyczne.
+ * Wypisuje na standardowe wyjście diagnostyczne komunikat o błędnym poleceniu.
  * @param[in] line_number : numer linii, w której wystąpił błąd
  */
 void PrintWrongCommandError(long line_number);

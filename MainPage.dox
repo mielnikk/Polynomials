@@ -36,4 +36,52 @@ Wielomian reprezentujemy jako stałą, jednomian lub sumę jednomianów.
 Stała jest liczbą całkowitą. Jednomian reprezentujemy jako parę (@p coeff,@p exp),
 gdzie współczynnik @p coeff jest wielomianem, a wykładnik @p exp jest liczbą nieujemną.
 
+@section dane Dane wejściowe
+
+Poprawny wiersz nie zawiera żadnych dodatkowych białych znaków oprócz pojedynczej spacji separującej parametr poleceń
+@ref At "AT" i @ref DegBy "DEG_BY" od polecenia. Znak @p + służy tylko do wyrażania sumy jednomianów i nie może
+poprzedzać liczby.
+
+Puste wiersze oraz wiersze zaczynające się od znaku '#' są ignorowane.
+
+Wartość współczynnika jednomianu lub parametru polecenia @ref At "AT" uznajemy za niepoprawną, jeśli jest mniejsza od
+@p -9223372036854775808 lub większa od @p 9223372036854775807.
+
+Wartość parametru polecenia @ref DegBy "DEG_BY" uznajemy za
+niepoprawną, jeśli jest mniejsza od @p 0 lub większa od @p 18446744073709551615.
+
+Wartość parametru polecenia
+@ref Compose "COMPOSE" uznajemy za niepoprawną, jeśli jest mniejsza od @p 0 lub większa od @p 18446744073709551615.
+
+Wartość wykładnika jednomianu uznajemy za niepoprawną, jeśli jest mniejsza od @p 0 lub większa od @p 2147483647.
+
+@section bledy Obsługa błędów
+Komunikaty o błędzie są wypisywane na standardowe wyjście diagnostyczne.
+
+Jeśli program wykryje niepoprawną nazwę polecenia, wypisuje:
+
+<tt>ERROR w WRONG COMMAND\\n</tt>
+
+Jeśli w poleceniu @ref DegBy "DEG_BY" nie podano parametru lub jest on niepoprawny, program wypisuje:
+
+<tt>ERROR w DEG BY WRONG VARIABLE\\n</tt>
+
+Jeśli w poleceniu @ref At "AT" nie podano parametru lub jest on niepoprawny, program wypisuje:
+
+<tt>ERROR w AT WRONG VALUE\\n</tt>
+
+Jeśli w poleceniu @ref Compose "COMPOSE" nie podano parametru lub jest on niepoprawny, program wypisuje:
+
+<tt>ERROR w COMPOSE WRONG PARAMETER\\n</tt>
+
+Jeśli na stosie jest za mało wielomianów, aby wykonać polecenie, program wypisuje:
+
+<tt>ERROR w STACK UNDERFLOW\\n</tt>
+
+Jeśli program wykryje błąd podczas parsowania wielomianu, wypisuje
+
+<tt>ERROR w WRONG POLY\\n</tt>
+
+gdzie @p \\n oznacza znak przejścia do nowego wiersza, a @p w oznacza numer linii.
+
 */
