@@ -12,7 +12,7 @@
 /**
  * Wstawia wielomian zerowy na górę stosu.
  * @param[in,out] s : stos
- * @return @p true -
+ * @return @p true
  */
 bool Zero(Stack *s);
 
@@ -137,8 +137,8 @@ bool Print(Stack *s);
  * Zdejmuje z wierzchołka stosu pierwszy wielomian, a następnie kolejno @p k
  * wielomianów, które podstawia na miejsce kolejnych zmiennych w pierwszym wielomianie.
  * @param s : stos
- * @param k : liczba wielomianów
- * @return : złożenie wielomianu z wierzhołka oraz @p k następnych wielomianów
+ * @param k : liczba wielomianów, które należy zdjąć ze stosu (oprócz pierwszego wielomianu)
+ * @return Czy operacja się powodła?
  */
 bool Compose(Stack *s, size_t k);
 

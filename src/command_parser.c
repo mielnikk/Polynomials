@@ -68,7 +68,7 @@ void PrintWrongCommandError(long line_number) {
  * lub jego braku przy poleceniu @ref DegBy.
  * @param[in] line_number : numer linii, w której wystąpił błąd
  */
-static void PrintDegByWrongVariableError(long line_number) {
+static void PrintDegByVariableError(long line_number) {
     fprintf(stderr, "ERROR %ld DEG BY WRONG VARIABLE\n", line_number);
 }
 
@@ -77,7 +77,7 @@ static void PrintDegByWrongVariableError(long line_number) {
  * lub jego braku przy poleceniu @ref At.
  * @param[in] line_number : numer linii, w której wystąpił błąd
  */
-static void PrintWrongAtValue(long line_number) {
+static void PrintAtValueError(long line_number) {
     fprintf(stderr, "ERROR %ld AT WRONG VALUE\n", line_number);
 }
 
@@ -129,20 +129,20 @@ static char *GetArg(char *line, size_t line_size) {
  */
 static void ParseAt(Stack *s, char *arg, long line_number) {
     if (arg == NULL || (arg[0] != '-' && !isdigit(arg[0]))) {
-        PrintWrongAtValue(line_number);
+        PrintAtValueError(line_number);
         return;
     }
     char *endptr;
     long long value = strtoll(arg, &endptr, 10);
     /* Błędna wartość argumentu */
     if (errno == ERANGE) {
-        PrintWrongAtValue(line_number);
+        PrintAtValueError(line_number);
         errno = 0;
         return;
     }
     /* Argument nie był liczbą */
     if (endptr[0] != '\0') {
-        PrintWrongAtValue(line_number);
+        PrintAtValueError(line_number);
         return;
     }
 
@@ -162,20 +162,20 @@ static void ParseAt(Stack *s, char *arg, long line_number) {
  */
 static void ParseDegBy(Stack *s, char *arg, long line_number) {
     if (arg == NULL || !isdigit(arg[0])) {
-        PrintDegByWrongVariableError(line_number);
+        PrintDegByVariableError(line_number);
         return;
     }
     char *endptr;
     unsigned long long value = strtoull(arg, &endptr, BASE_10);
     /* Niepoprawny zakres */
     if (errno == ERANGE) {
-        PrintDegByWrongVariableError(line_number);
+        PrintDegByVariableError(line_number);
         errno = 0;
         return;
     }
     /* Argument nie był liczbą */
     if (endptr[0] != '\0') {
-        PrintDegByWrongVariableError(line_number);
+        PrintDegByVariableError(line_number);
         return;
     }
 

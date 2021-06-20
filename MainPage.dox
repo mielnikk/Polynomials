@@ -55,7 +55,7 @@ Wartość parametru polecenia
 
 Wartość wykładnika jednomianu uznajemy za niepoprawną, jeśli jest mniejsza od @p 0 lub większa od @p 2147483647.
 
-@section bledy Obsługa błędów
+@section bledy Błędy
 Komunikaty o błędzie są wypisywane na standardowe wyjście diagnostyczne.
 
 Jeśli program wykryje niepoprawną nazwę polecenia, wypisuje:

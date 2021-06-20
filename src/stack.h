@@ -59,7 +59,7 @@ Poly Top(Stack *s);
 /**
  * Zwraca drugi od góry element stosu.
  * @param s : stos
- * @return
+ * @return drugi od góry element stosu
  */
 Poly SecondTop(Stack *s);
 
