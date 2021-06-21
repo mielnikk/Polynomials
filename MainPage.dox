@@ -3,23 +3,26 @@
 
 @section opis_programu Opis programu
 
-Kalkulator działający na wielomianach i stosujący odwrotną notację polską. Wprowadzone wielomiany przechowuje na stosie.
+Kalkulator działający na wielomianach i stosujący odwrotną notację polską.
+
+Wprowadzone @ref wielomiany "wielomiany" przechowuje na stosie.
+
 Umożliwia wykonywanie następujących poleceń:
-- @ref Zero "ZERO" – wstawia na wierzchołek stosu wielomian tożsamościowo równy zeru;
-- @ref IsCoeff "IS_COEFF" – sprawdza, czy wielomian na wierzchołku stosu jest współczynnikiem – wypisuje na standardowe wyjście @p 0 lub @p 1;
-- @ref IsZero "IS_ZERO" – sprawdza, czy wielomian na wierzchołku stosu jest tożsamościowo równy zeru – wypisuje na standardowe wyjście @p 0 lub @p 1;
-- @ref Clone "CLONE" – wstawia na stos kopię wielomianu z wierzchołka;
-- @ref Add "ADD" – dodaje dwa wielomiany z wierzchu stosu, usuwa je i wstawia na wierzchołek stosu ich sumę;
-- @ref Mul "MUL" – mnoży dwa wielomiany z wierzchu stosu, usuwa je i wstawia na wierzchołek stosu ich iloczyn;
-- @ref Neg "NEG" – neguje wielomian na wierzchołku stosu;
-- @ref Sub "SUB" – odejmuje od wielomianu z wierzchołka wielomian pod wierzchołkiem, usuwa je i wstawia na wierzchołek stosu różnicę;
-- @ref IsEq "IS_EQ" – sprawdza, czy dwa wielomiany na wierzchu stosu są równe – wypisuje na standardowe wyjście @p 0 lub @p 1;
-- @ref Deg "DEG" – wypisuje na standardowe wyjście stopień wielomianu (@p −1 dla wielomianu tożsamościowo równego zeru);
-- @ref DegBy "DEG_BY" @p idx – wypisuje na standardowe wyjście stopień wielomianu ze względu na zmienną o numerze idx (@p −1 dla wielomianu tożsamościowo równego zeru);
-- @ref At "AT" @p x – wylicza wartość wielomianu w punkcie @p x, usuwa wielomian z wierzchołka i wstawia na stos wynik operacji;
-- @ref Print "PRINT" – wypisuje na standardowe wyjście wielomian z wierzchołka stosu;
-- @ref StackPop "POP" – usuwa wielomian z wierzchołka stosu;
-- @ref Compose "COMPOSE" @p k - zdejmuje z wierzchołka stosu najpierw wielomian @f$p@f$, a potem kolejno wielomiany @f$q_{k - 1}, q_{k - 2}, …, q_0@f$
+- @p ZERO – wstawia na wierzchołek stosu wielomian tożsamościowo równy zeru;
+- @p IS_COEFF – sprawdza, czy wielomian na wierzchołku stosu jest współczynnikiem – wypisuje na standardowe wyjście @p 0 lub @p 1;
+- @p IS_ZERO – sprawdza, czy wielomian na wierzchołku stosu jest tożsamościowo równy zeru – wypisuje na standardowe wyjście @p 0 lub @p 1;
+- @p CLONE – wstawia na stos kopię wielomianu z wierzchołka;
+- @p ADD – dodaje dwa wielomiany z wierzchu stosu, usuwa je i wstawia na wierzchołek stosu ich sumę;
+- @p MUL – mnoży dwa wielomiany z wierzchu stosu, usuwa je i wstawia na wierzchołek stosu ich iloczyn;
+- @p NEG – neguje wielomian na wierzchołku stosu;
+- @p SUB – odejmuje od wielomianu z wierzchołka wielomian pod wierzchołkiem, usuwa je i wstawia na wierzchołek stosu różnicę;
+- @p IS_EQ – sprawdza, czy dwa wielomiany na wierzchu stosu są równe – wypisuje na standardowe wyjście @p 0 lub @p 1;
+- @p DEG – wypisuje na standardowe wyjście stopień wielomianu (@p −1 dla wielomianu tożsamościowo równego zeru);
+- @p DEG_BY @p idx – wypisuje na standardowe wyjście stopień wielomianu ze względu na zmienną o numerze idx (@p −1 dla wielomianu tożsamościowo równego zeru);
+- @p AT @p x – wylicza wartość wielomianu w punkcie @p x, usuwa wielomian z wierzchołka i wstawia na stos wynik operacji;
+- @p PRINT – wypisuje na standardowe wyjście wielomian z wierzchołka stosu;
+- @p POP – usuwa wielomian z wierzchołka stosu;
+- @p COMPOSE @p k - zdejmuje z wierzchołka stosu najpierw wielomian @f$p@f$, a potem kolejno wielomiany @f$q_{k - 1}, q_{k - 2}, …, q_0@f$
 i umieszcza na stosie wynik operacji złożenia.
 
 @section wielomiany Wielomiany
@@ -39,19 +42,19 @@ gdzie współczynnik @p coeff jest wielomianem, a wykładnik @p exp jest liczbą
 @section dane Dane wejściowe
 
 Poprawny wiersz nie zawiera żadnych dodatkowych białych znaków oprócz pojedynczej spacji separującej parametr poleceń
-@ref At "AT" i @ref DegBy "DEG_BY" od polecenia. Znak @p + służy tylko do wyrażania sumy jednomianów i nie może
+@p AT i <tt>DEG BY</tt> od polecenia. Znak @p + służy tylko do wyrażania sumy jednomianów i nie może
 poprzedzać liczby.
 
 Puste wiersze oraz wiersze zaczynające się od znaku '#' są ignorowane.
 
-Wartość współczynnika jednomianu lub parametru polecenia @ref At "AT" uznajemy za niepoprawną, jeśli jest mniejsza od
+Wartość współczynnika jednomianu lub parametru polecenia @p AT uznajemy za niepoprawną, jeśli jest mniejsza od
 @p -9223372036854775808 lub większa od @p 9223372036854775807.
 
-Wartość parametru polecenia @ref DegBy "DEG_BY" uznajemy za
+Wartość parametru polecenia <tt>DEG BY</tt> uznajemy za
 niepoprawną, jeśli jest mniejsza od @p 0 lub większa od @p 18446744073709551615.
 
 Wartość parametru polecenia
-@ref Compose "COMPOSE" uznajemy za niepoprawną, jeśli jest mniejsza od @p 0 lub większa od @p 18446744073709551615.
+@p COMPOSE uznajemy za niepoprawną, jeśli jest mniejsza od @p 0 lub większa od @p 18446744073709551615.
 
 Wartość wykładnika jednomianu uznajemy za niepoprawną, jeśli jest mniejsza od @p 0 lub większa od @p 2147483647.
 
@@ -62,15 +65,15 @@ Jeśli program wykryje niepoprawną nazwę polecenia, wypisuje:
 
 <tt>ERROR w WRONG COMMAND\\n</tt>
 
-Jeśli w poleceniu @ref DegBy "DEG_BY" nie podano parametru lub jest on niepoprawny, program wypisuje:
+Jeśli w poleceniu <tt>DEG BY</tt> nie podano parametru lub jest on niepoprawny, program wypisuje:
 
 <tt>ERROR w DEG BY WRONG VARIABLE\\n</tt>
 
-Jeśli w poleceniu @ref At "AT" nie podano parametru lub jest on niepoprawny, program wypisuje:
+Jeśli w poleceniu @p AT nie podano parametru lub jest on niepoprawny, program wypisuje:
 
 <tt>ERROR w AT WRONG VALUE\\n</tt>
 
-Jeśli w poleceniu @ref Compose "COMPOSE" nie podano parametru lub jest on niepoprawny, program wypisuje:
+Jeśli w poleceniu @p COMPOSE nie podano parametru lub jest on niepoprawny, program wypisuje:
 
 <tt>ERROR w COMPOSE WRONG PARAMETER\\n</tt>
 
@@ -83,5 +86,11 @@ Jeśli program wykryje błąd podczas parsowania wielomianu, wypisuje
 <tt>ERROR w WRONG POLY\\n</tt>
 
 gdzie @p \\n oznacza znak przejścia do nowego wiersza, a @p w oznacza numer linii.
+
+@section Kompilacja
+
+Wywołanie <tt>make</tt> tworzy plik wykonywalny @p poly.
+
+Wywołanie <tt>make test</tt> tworzy plik wykonywalny @p poly_test, testujący moduł z operacjami na wielomianach.
 
 */
